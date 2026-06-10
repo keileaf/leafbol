@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Mundial 2026 — Tijuana</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;600&display=swap');
+
+:root {
+  --bg: #0a0f1a;
+  --surface: #111827;
+  --surface2: #1a2235;
+  --border: #1e2d45;
+  --accent: #e8c23a;
+  --accent2: #2ecc71;
+  --red: #e74c3c;
+  --blue: #3b82f6;
+  --text: #e8eaf0;
+  --muted: #6b7a99;
+  --live: #ff4444;
+  --gold: #f5c842;
+  --silver: #a0aec0;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overscroll-behavior: none;
+}
+
+/* ── HEADER ─────────────────────────────────── */
+header {
+  background: linear-gradient(135deg, #0a0f1a 0%, #0d1b2e 100%);
+  border-bottom: 2px solid var(--accent);
+  padding: 14px 18px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+.trophy { font-size: 1.8rem; }
+.header-text h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.75rem;
+  letter-spacing: 2px;
+  color: var(--accent);
+  line-height: 1;
+}
+.header-text p {
+  font-size: 0.68rem;
+  color: var(--muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+.header-right {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+.clock {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.clock-sub {
+  font-size: 0.6rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── STAGE NAV ───────────────────────────────── */
+.stage-nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 12px;
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.stage-nav::-webkit-scrollbar { display: none; }
+.stage-btn {
+  flex-shrink: 0;
+  padding: 11px 13px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s, border-color 0.2s;
+}
+.stage-btn:hover { color: var(--text); }
+.stage-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── DATE BAR ────────────────────────────────── */
+.date-bar {
+  background: var(--surface2);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--border);
+}
+.date-bar::-webkit-scrollbar { display: none; }
+.date-pill {
+  flex-shrink: 0;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.18s;
+  text-align: center;
+  min-width: 50px;
+  position: relative;
+}
+.date-pill:hover { border-color: var(--accent); color: var(--text); }
+.date-pill.active { background: var(--accent); border-color: var(--accent); color: #000; }
+.date-pill.is-today:not(.active) { border-color: var(--accent2); }
+.date-pill .pday { font-family: 'Bebas Neue', sans-serif; font-size: 1.15rem; line-height: 1; }
+.date-pill .pdow { font-size: 0.58rem; text-transform: uppercase; opacity: 0.75; margin-top: 1px; }
+.date-pill.is-today .pdow { color: var(--accent2); opacity: 1; font-weight: 700; }
+.date-pill.active .pdow { color: #000; opacity: 0.6; }
+
+/* ── MAIN ────────────────────────────────────── */
+main { padding: 14px 12px; max-width: 680px; margin: 0 auto; }
+
+.day-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.day-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+.match-count {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* stage divider */
+.stage-divider {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--muted);
+  padding: 10px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.stage-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── MATCH CARD ──────────────────────────────── */
+.match-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.1s;
+  position: relative;
+}
+.match-card:active { transform: scale(0.99); }
+
+/* upcoming: accent border top */
+.match-card.upcoming { border-top: 2px solid var(--accent); }
+/* today */
+.match-card.today-card { border-color: #2a3d60; }
+/* finished */
+.match-card.finished { opacity: 0.85; }
+/* final highlight */
+.match-card.is-final { border-color: var(--gold); }
+.match-card.is-final .match-time { color: var(--gold); }
+
+/* meta row */
+.match-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px 0;
+  flex-wrap: wrap;
+}
+.group-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--surface2);
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.ko-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #0d2218;
+  color: var(--accent2);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.final-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #2a2000;
+  color: var(--gold);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.status-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: auto;
+}
+.status-badge.done { background: #0d1f0d; color: var(--accent2); }
+.status-badge.upcoming-b { background: #1a1500; color: var(--accent); }
+
+.venue-text {
+  font-size: 0.62rem;
+  color: var(--muted);
+  margin-left: auto;
+}
+
+/* match body — 3-col grid */
+.match-body {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 10px 12px 12px;
+  gap: 6px;
+}
+
+.team { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.team.away { align-items: flex-end; }
+.team-flag {
+  width: 36px; height: 26px;
+  object-fit: cover;
+  border-radius: 3px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  display: block;
+}
+.team-flag-emoji { font-size: 2rem; line-height: 1; }
+.team-name {
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.2;
+}
+.team.away .team-name { text-align: right; }
+.team-score {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.3rem;
+  color: var(--accent2);
+  line-height: 1;
+}
+.team-score.winner { color: var(--gold); }
+
+/* center column */
+.match-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 56px;
+}
+.match-time {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  text-align: center;
+}
+.match-vs {
+  font-size: 0.6rem;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.score-display {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2rem;
+  color: var(--text);
+  letter-spacing: 4px;
+  line-height: 1;
+}
+.score-ft {
+  font-size: 0.6rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ── EMPTY STATE ─────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 52px 20px;
+  color: var(--muted);
+}
+.empty-icon { font-size: 3.5rem; margin-bottom: 12px; }
+.empty-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.5rem;
+  color: var(--surface2);
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.empty-sub { font-size: 0.8rem; color: var(--muted); }
+.next-match-hint {
+  margin-top: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  display: inline-block;
+  text-align: left;
+  max-width: 320px;
+  width: 100%;
+}
+.next-match-hint .hint-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.next-match-hint .hint-game {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.next-match-hint .hint-time {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+/* ── RESULTS NOTE ───────────────────────────── */
+.results-note {
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-align: center;
+  padding: 8px 12px;
+  background: var(--surface2);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+.results-note a { color: var(--accent); text-decoration: none; }
+
+/* ── FOOTER ──────────────────────────────────── */
+footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 0.65rem;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+/* ── RESPONSIVE ──────────────────────────────── */
+@media (max-width: 400px) {
+  .header-text h1 { font-size: 1.45rem; }
+  .team-flag { font-size: 1.6rem; }
+  .team-name { font-size: 0.75rem; }
+  .match-center { min-width: 48px; }
+  .score-display { font-size: 1.7rem; }
+  .venue-text { display: none; }
+  main { padding: 10px 10px; }
+}
+@media (min-width: 600px) {
+  main { padding: 18px 20px; }
+  .team-flag { font-size: 2.2rem; }
+  .team-name { font-size: 0.9rem; }
+  .match-card { margin-bottom: 10px; }
+  .match-body { padding: 12px 16px 14px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="trophy">🏆</div>
+  <div class="header-text">
+    <h1>Mundial 2026</h1>
+    <p>⏰ Horario Tijuana (PDT)</p>
+  </div>
+  <div class="header-right">
+    <div class="clock" id="clock">--:--</div>
+    <div class="clock-sub">Tijuana · PDT</div>
+  </div>
+</header>
+
+<nav class="stage-nav" id="stageNav"></nav>
+<div class="date-bar" id="dateBar"></div>
+
+<main id="mainContent"></main>
+
+<footer>
+  ⚽ FIFA World Cup 2026 · 11 Jun – 19 Jul 2026<br>
+  Todos los horarios en PDT — Tijuana / Baja California<br>
+  Los marcadores históricos son ilustrativos; actualiza la página para resultados reales.
+</footer>
+
+<script>
+// ════════════════════════════════════════════════════
+//  UTILS: conversión ET → PDT
+//  ET verano = UTC-4 | PDT = UTC-7 → ET - 3h
+// ════════════════════════════════════════════════════
+function etToPdt(etStr) {
+  const [time, ampm] = etStr.split(' ');
+  let [h, m] = time.split(':').map(Number);
+  if (ampm === 'PM' && h !== 12) h += 12;
+  if (ampm === 'AM' && h === 12) h = 0;
+  h -= 3;
+  if (h < 0) h += 24;
+  const suf = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${h12}:${m.toString().padStart(2,'0')} ${suf}`;
+}
+
+// PDT datetime para comparación: devuelve "YYYY-MM-DD HH:MM" en Tijuana
+function nowTijuana() {
+  return new Date().toLocaleString('en-CA', {
+    timeZone: 'America/Tijuana',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).replace(',', '');
+}
+function todayTijuana() { return nowTijuana().slice(0, 10); }
+
+// Devuelve "YYYY-MM-DD HH:MM" de un partido para comparar
+function matchDateTime(m) {
+  const [time, ampm] = m.et.split(' ');
+  let [h, min] = time.split(':').map(Number);
+  if (ampm === 'PM' && h !== 12) h += 12;
+  if (ampm === 'AM' && h === 12) h = 0;
+  h -= 3; // ET → PDT
+  if (h < 0) h += 24;
+  return `${m.date} ${h.toString().padStart(2,'0')}:${min.toString().padStart(2,'0')}`;
+}
+
+// ════════════════════════════════════════════════════
+//  BANDERAS — flagcdn.com (imágenes reales, no emojis)
+// ════════════════════════════════════════════════════
+const FLAG_CODES = {
+  'México':'mx','Sudáfrica':'za','Corea del Sur':'kr','Chequia':'cz',
+  'Canadá':'ca','Bosnia-Herzegovina':'ba','EUA':'us','Paraguay':'py',
+  'Qatar':'qa','Suiza':'ch','Brasil':'br','Marruecos':'ma','Haití':'ht',
+  'Escocia':'gb-sct','Australia':'au','Turquía':'tr','Alemania':'de',
+  'Curazao':'cw','Países Bajos':'nl','Japón':'jp','Costa de Marfil':'ci',
+  'Ecuador':'ec','Suecia':'se','Túnez':'tn','España':'es','Cabo Verde':'cv',
+  'Bélgica':'be','Egipto':'eg','Arabia Saudita':'sa','Uruguay':'uy',
+  'Irán':'ir','Nueva Zelanda':'nz','Francia':'fr','Senegal':'sn',
+  'Irak':'iq','Noruega':'no','Argentina':'ar','Argelia':'dz','Austria':'at',
+  'Jordania':'jo','Portugal':'pt','Rep. Dem. Congo':'cd','Inglaterra':'gb-eng',
+  'Ghana':'gh','Panamá':'pa','Uzbekistán':'uz','Colombia':'co','Croacia':'hr'
+};
+function flagImg(team) {
+  const c = FLAG_CODES[team];
+  if (c) return `<img class="team-flag" src="https://flagcdn.com/40x30/${c}.png" alt="${team}" loading="lazy">`;
+  return `<span class="team-flag-emoji">⚽</span>`;
+}
+
+// ════════════════════════════════════════════════════
+//  DATOS — horarios en ET (fuente: worldcupwiki.com)
+//  match status: 'upcoming' | 'finished' | 'pending'
+//  score: null si no jugado, {h: X, a: X} si terminado
+// ════════════════════════════════════════════════════
+const RAW = [
+  // ── FASE DE GRUPOS ──────────────────────────────
+  // Jun 11
+  {d:'2026-06-11',g:'A',h:'México',       a:'Sudáfrica',          hf:'🇲🇽',af:'🇿🇦',et:'3:00 PM', v:'Azteca, CDMX'},
+  {d:'2026-06-11',g:'A',h:'Corea del Sur',a:'Chequia',            hf:'🇰🇷',af:'🇨🇿',et:'10:00 PM',v:'Akron, Zapopan'},
+  // Jun 12
+  {d:'2026-06-12',g:'B',h:'Canadá',       a:'Bosnia-Herzegovina', hf:'🇨🇦',af:'🇧🇦',et:'3:00 PM', v:'BMO Field, Toronto'},
+  {d:'2026-06-12',g:'D',h:'EUA',          a:'Paraguay',           hf:'🇺🇸',af:'🇵🇾',et:'9:00 PM', v:'SoFi, Inglewood'},
+  // Jun 13
+  {d:'2026-06-13',g:'B',h:'Qatar',        a:'Suiza',              hf:'🇶🇦',af:'🇨🇭',et:'3:00 PM', v:"Levi's, Santa Clara"},
+  {d:'2026-06-13',g:'C',h:'Brasil',       a:'Marruecos',          hf:'🇧🇷',af:'🇲🇦',et:'6:00 PM', v:'MetLife, NJ'},
+  {d:'2026-06-13',g:'C',h:'Haití',        a:'Escocia',            hf:'🇭🇹',af:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',et:'9:00 PM', v:'Gillette, Foxborough'},
+  // Jun 14
+  {d:'2026-06-14',g:'D',h:'Australia',    a:'Turquía',            hf:'🇦🇺',af:'🇹🇷',et:'12:00 AM',v:'BC Place, Vancouver'},
+  {d:'2026-06-14',g:'E',h:'Alemania',     a:'Curazao',            hf:'🇩🇪',af:'🇨🇼',et:'1:00 PM', v:'NRG, Houston'},
+  {d:'2026-06-14',g:'F',h:'Países Bajos', a:'Japón',              hf:'🇳🇱',af:'🇯🇵',et:'4:00 PM', v:'AT&T, Arlington'},
+  {d:'2026-06-14',g:'E',h:'Costa de Marfil',a:'Ecuador',          hf:'🇨🇮',af:'🇪🇨',et:'7:00 PM', v:'Lincoln, Filadelfia'},
+  {d:'2026-06-14',g:'F',h:'Suecia',       a:'Túnez',              hf:'🇸🇪',af:'🇹🇳',et:'10:00 PM',v:'BBVA, Monterrey'},
+  // Jun 15
+  {d:'2026-06-15',g:'H',h:'España',       a:'Cabo Verde',         hf:'🇪🇸',af:'🇨🇻',et:'12:00 PM',v:'Mercedes-Benz, Atlanta'},
+  {d:'2026-06-15',g:'G',h:'Bélgica',      a:'Egipto',             hf:'🇧🇪',af:'🇪🇬',et:'3:00 PM', v:'Lumen Field, Seattle'},
+  {d:'2026-06-15',g:'H',h:'Arabia Saudita',a:'Uruguay',           hf:'🇸🇦',af:'🇺🇾',et:'6:00 PM', v:'Hard Rock, Miami'},
+  {d:'2026-06-15',g:'G',h:'Irán',         a:'Nueva Zelanda',      hf:'🇮🇷',af:'🇳🇿',et:'9:00 PM', v:'SoFi, Inglewood'},
+  // Jun 16
+  {d:'2026-06-16',g:'I',h:'Francia',      a:'Senegal',            hf:'🇫🇷',af:'🇸🇳',et:'3:00 PM', v:'MetLife, NJ'},
+  {d:'2026-06-16',g:'I',h:'Irak',         a:'Noruega',            hf:'🇮🇶',af:'🇳🇴',et:'6:00 PM', v:'Gillette, Foxborough'},
+  {d:'2026-06-16',g:'J',h:'Argentina',    a:'Argelia',            hf:'🇦🇷',af:'🇩🇿',et:'9:00 PM', v:'Arrowhead, Kansas City'},
+  // Jun 17
+  {d:'2026-06-17',g:'J',h:'Austria',      a:'Jordania',           hf:'🇦🇹',af:'🇯🇴',et:'12:00 AM',v:"Levi's, Santa Clara"},
+  {d:'2026-06-17',g:'K',h:'Portugal',     a:'Rep. Dem. Congo',    hf:'🇵🇹',af:'🇨🇩',et:'1:00 PM', v:'NRG, Houston'},
+  {d:'2026-06-17',g:'L',h:'Inglaterra',   a:'Croacia',            hf:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',af:'🇭🇷',et:'4:00 PM', v:'AT&T, Arlington'},
+  {d:'2026-06-17',g:'L',h:'Ghana',        a:'Panamá',             hf:'🇬🇭',af:'🇵🇦',et:'7:00 PM', v:'BMO Field, Toronto'},
+  {d:'2026-06-17',g:'K',h:'Uzbekistán',   a:'Colombia',           hf:'🇺🇿',af:'🇨🇴',et:'10:00 PM',v:'Azteca, CDMX'},
+  // Jun 18
+  {d:'2026-06-18',g:'A',h:'Chequia',      a:'Sudáfrica',          hf:'🇨🇿',af:'🇿🇦',et:'12:00 PM',v:'Mercedes-Benz, Atlanta'},
+  {d:'2026-06-18',g:'B',h:'Suiza',        a:'Bosnia-Herzegovina', hf:'🇨🇭',af:'🇧🇦',et:'3:00 PM', v:'SoFi, Inglewood'},
+  {d:'2026-06-18',g:'B',h:'Canadá',       a:'Qatar',              hf:'🇨🇦',af:'🇶🇦',et:'6:00 PM', v:'BC Place, Vancouver'},
+  {d:'2026-06-18',g:'A',h:'México',       a:'Corea del Sur',      hf:'🇲🇽',af:'🇰🇷',et:'9:00 PM', v:'Akron, Zapopan'},
+  // Jun 19
+  {d:'2026-06-19',g:'D',h:'EUA',          a:'Australia',          hf:'🇺🇸',af:'🇦🇺',et:'3:00 PM', v:'Lumen Field, Seattle'},
+  {d:'2026-06-19',g:'C',h:'Escocia',      a:'Marruecos',          hf:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',af:'🇲🇦',et:'6:00 PM', v:'Gillette, Foxborough'},
+  {d:'2026-06-19',g:'C',h:'Brasil',       a:'Haití',              hf:'🇧🇷',af:'🇭🇹',et:'8:30 PM', v:'Lincoln, Filadelfia'},
+  {d:'2026-06-19',g:'D',h:'Turquía',      a:'Paraguay',           hf:'🇹🇷',af:'🇵🇾',et:'11:00 PM',v:"Levi's, Santa Clara"},
+  // Jun 20
+  {d:'2026-06-20',g:'F',h:'Países Bajos', a:'Suecia',             hf:'🇳🇱',af:'🇸🇪',et:'1:00 PM', v:'NRG, Houston'},
+  {d:'2026-06-20',g:'E',h:'Alemania',     a:'Costa de Marfil',    hf:'🇩🇪',af:'🇨🇮',et:'4:00 PM', v:'BMO Field, Toronto'},
+  {d:'2026-06-20',g:'E',h:'Ecuador',      a:'Curazao',            hf:'🇪🇨',af:'🇨🇼',et:'8:00 PM', v:'Arrowhead, Kansas City'},
+  // Jun 21
+  {d:'2026-06-21',g:'F',h:'Túnez',        a:'Japón',              hf:'🇹🇳',af:'🇯🇵',et:'12:00 AM',v:'BBVA, Monterrey'},
+  {d:'2026-06-21',g:'H',h:'España',       a:'Arabia Saudita',     hf:'🇪🇸',af:'🇸🇦',et:'12:00 PM',v:'Mercedes-Benz, Atlanta'},
+  {d:'2026-06-21',g:'G',h:'Bélgica',      a:'Irán',               hf:'🇧🇪',af:'🇮🇷',et:'3:00 PM', v:'SoFi, Inglewood'},
+  {d:'2026-06-21',g:'H',h:'Uruguay',      a:'Cabo Verde',         hf:'🇺🇾',af:'🇨🇻',et:'6:00 PM', v:'Hard Rock, Miami'},
+  {d:'2026-06-21',g:'G',h:'Nueva Zelanda',a:'Egipto',             hf:'🇳🇿',af:'🇪🇬',et:'9:00 PM', v:'BC Place, Vancouver'},
+  // Jun 22
+  {d:'2026-06-22',g:'J',h:'Argentina',    a:'Austria',            hf:'🇦🇷',af:'🇦🇹',et:'1:00 PM', v:'AT&T, Arlington'},
+  {d:'2026-06-22',g:'I',h:'Francia',      a:'Irak',               hf:'🇫🇷',af:'🇮🇶',et:'5:00 PM', v:'Lincoln, Filadelfia'},
+  {d:'2026-06-22',g:'I',h:'Noruega',      a:'Senegal',            hf:'🇳🇴',af:'🇸🇳',et:'8:00 PM', v:'MetLife, NJ'},
+  {d:'2026-06-22',g:'J',h:'Jordania',     a:'Argelia',            hf:'🇯🇴',af:'🇩🇿',et:'11:00 PM',v:"Levi's, Santa Clara"},
+  // Jun 23
+  {d:'2026-06-23',g:'K',h:'Portugal',     a:'Uzbekistán',         hf:'🇵🇹',af:'🇺🇿',et:'1:00 PM', v:'NRG, Houston'},
+  {d:'2026-06-23',g:'L',h:'Inglaterra',   a:'Ghana',              hf:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',af:'🇬🇭',et:'4:00 PM', v:'Gillette, Foxborough'},
+  {d:'2026-06-23',g:'L',h:'Panamá',       a:'Croacia',            hf:'🇵🇦',af:'🇭🇷',et:'7:00 PM', v:'BMO Field, Toronto'},
+  {d:'2026-06-23',g:'K',h:'Colombia',     a:'Rep. Dem. Congo',    hf:'🇨🇴',af:'🇨🇩',et:'10:00 PM',v:'Akron, Zapopan'},
+  // Jun 24
+  {d:'2026-06-24',g:'B',h:'Suiza',        a:'Canadá',             hf:'🇨🇭',af:'🇨🇦',et:'3:00 PM', v:'BC Place, Vancouver'},
+  {d:'2026-06-24',g:'B',h:'Bosnia-Herzegovina',a:'Qatar',         hf:'🇧🇦',af:'🇶🇦',et:'3:00 PM', v:'Lumen Field, Seattle'},
+  {d:'2026-06-24',g:'C',h:'Escocia',      a:'Brasil',             hf:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',af:'🇧🇷',et:'6:00 PM', v:'Hard Rock, Miami'},
+  {d:'2026-06-24',g:'C',h:'Marruecos',    a:'Haití',              hf:'🇲🇦',af:'🇭🇹',et:'6:00 PM', v:'Mercedes-Benz, Atlanta'},
+  {d:'2026-06-24',g:'A',h:'Chequia',      a:'México',             hf:'🇨🇿',af:'🇲🇽',et:'9:00 PM', v:'Azteca, CDMX'},
+  {d:'2026-06-24',g:'A',h:'Sudáfrica',    a:'Corea del Sur',      hf:'🇿🇦',af:'🇰🇷',et:'9:00 PM', v:'BBVA, Monterrey'},
+  // Jun 25
+  {d:'2026-06-25',g:'E',h:'Curazao',      a:'Costa de Marfil',    hf:'🇨🇼',af:'🇨🇮',et:'4:00 PM', v:'Lincoln, Filadelfia'},
+  {d:'2026-06-25',g:'E',h:'Ecuador',      a:'Alemania',           hf:'🇪🇨',af:'🇩🇪',et:'4:00 PM', v:'MetLife, NJ'},
+  {d:'2026-06-25',g:'F',h:'Japón',        a:'Suecia',             hf:'🇯🇵',af:'🇸🇪',et:'7:00 PM', v:'AT&T, Arlington'},
+  {d:'2026-06-25',g:'F',h:'Túnez',        a:'Países Bajos',       hf:'🇹🇳',af:'🇳🇱',et:'7:00 PM', v:'Arrowhead, Kansas City'},
+  {d:'2026-06-25',g:'D',h:'Turquía',      a:'EUA',                hf:'🇹🇷',af:'🇺🇸',et:'10:00 PM',v:'SoFi, Inglewood'},
+  {d:'2026-06-25',g:'D',h:'Paraguay',     a:'Australia',          hf:'🇵🇾',af:'🇦🇺',et:'10:00 PM',v:"Levi's, Santa Clara"},
+  // Jun 26
+  {d:'2026-06-26',g:'I',h:'Noruega',      a:'Francia',            hf:'🇳🇴',af:'🇫🇷',et:'3:00 PM', v:'Gillette, Foxborough'},
+  {d:'2026-06-26',g:'I',h:'Senegal',      a:'Irak',               hf:'🇸🇳',af:'🇮🇶',et:'3:00 PM', v:'BMO Field, Toronto'},
+  {d:'2026-06-26',g:'H',h:'Cabo Verde',   a:'Arabia Saudita',     hf:'🇨🇻',af:'🇸🇦',et:'8:00 PM', v:'NRG, Houston'},
+  {d:'2026-06-26',g:'H',h:'Uruguay',      a:'España',             hf:'🇺🇾',af:'🇪🇸',et:'8:00 PM', v:'Akron, Zapopan'},
+  {d:'2026-06-26',g:'G',h:'Egipto',       a:'Irán',               hf:'🇪🇬',af:'🇮🇷',et:'11:00 PM',v:'Lumen Field, Seattle'},
+  {d:'2026-06-26',g:'G',h:'Nueva Zelanda',a:'Bélgica',            hf:'🇳🇿',af:'🇧🇪',et:'11:00 PM',v:'BC Place, Vancouver'},
+  // Jun 27
+  {d:'2026-06-27',g:'L',h:'Panamá',       a:'Inglaterra',         hf:'🇵🇦',af:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',et:'5:00 PM', v:'MetLife, NJ'},
+  {d:'2026-06-27',g:'L',h:'Croacia',      a:'Ghana',              hf:'🇭🇷',af:'🇬🇭',et:'5:00 PM', v:'Lincoln, Filadelfia'},
+  {d:'2026-06-27',g:'K',h:'Colombia',     a:'Portugal',           hf:'🇨🇴',af:'🇵🇹',et:'7:30 PM', v:'Hard Rock, Miami'},
+  {d:'2026-06-27',g:'K',h:'Rep. Dem. Congo',a:'Uzbekistán',       hf:'🇨🇩',af:'🇺🇿',et:'7:30 PM', v:'Mercedes-Benz, Atlanta'},
+  {d:'2026-06-27',g:'J',h:'Argelia',      a:'Austria',            hf:'🇩🇿',af:'🇦🇹',et:'10:00 PM',v:'Arrowhead, Kansas City'},
+  {d:'2026-06-27',g:'J',h:'Jordania',     a:'Argentina',          hf:'🇯🇴',af:'🇦🇷',et:'10:00 PM',v:'AT&T, Arlington'},
+  // ── RONDA 32 ────────────────────────────────
+  {d:'2026-06-28',s:'R32',h:'Sub. A',     a:'Sub. B',             hf:'⚽',af:'⚽',et:'3:00 PM', v:'SoFi, Inglewood'},
+  {d:'2026-06-29',s:'R32',h:'1ro. C',     a:'Sub. F',             hf:'⚽',af:'⚽',et:'1:00 PM', v:'NRG, Houston'},
+  {d:'2026-06-29',s:'R32',h:'1ro. E',     a:'3ro. ABCDF',         hf:'⚽',af:'⚽',et:'4:30 PM', v:'Gillette, Foxborough'},
+  {d:'2026-06-29',s:'R32',h:'1ro. F',     a:'Sub. C',             hf:'⚽',af:'⚽',et:'9:00 PM', v:'BBVA, Monterrey'},
+  {d:'2026-06-30',s:'R32',h:'Sub. E',     a:'Sub. I',             hf:'⚽',af:'⚽',et:'1:00 PM', v:'AT&T, Arlington'},
+  {d:'2026-06-30',s:'R32',h:'1ro. I',     a:'3ro. CDFGH',         hf:'⚽',af:'⚽',et:'5:00 PM', v:'MetLife, NJ'},
+  {d:'2026-06-30',s:'R32',h:'1ro. A',     a:'3ro. CEFHI',         hf:'⚽',af:'⚽',et:'9:00 PM', v:'Azteca, CDMX'},
+  {d:'2026-07-01',s:'R32',h:'1ro. L',     a:'3ro. EHIJK',         hf:'⚽',af:'⚽',et:'12:00 PM',v:'Mercedes-Benz, Atlanta'},
+  {d:'2026-07-01',s:'R32',h:'1ro. G',     a:'3ro. AEHIJ',         hf:'⚽',af:'⚽',et:'4:00 PM', v:'Lumen Field, Seattle'},
+  {d:'2026-07-01',s:'R32',h:'1ro. D',     a:'3ro. BEFIJ',         hf:'⚽',af:'⚽',et:'8:00 PM', v:"Levi's, Santa Clara"},
+  {d:'2026-07-02',s:'R32',h:'1ro. H',     a:'Sub. J',             hf:'⚽',af:'⚽',et:'3:00 PM', v:'SoFi, Inglewood'},
+  {d:'2026-07-02',s:'R32',h:'Sub. K',     a:'Sub. L',             hf:'⚽',af:'⚽',et:'7:00 PM', v:'BMO Field, Toronto'},
+  {d:'2026-07-02',s:'R32',h:'1ro. B',     a:'3ro. EFGIJ',         hf:'⚽',af:'⚽',et:'11:00 PM',v:'BC Place, Vancouver'},
+  {d:'2026-07-03',s:'R32',h:'Sub. D',     a:'Sub. G',             hf:'⚽',af:'⚽',et:'2:00 PM', v:'AT&T, Arlington'},
+  {d:'2026-07-03',s:'R32',h:'1ro. J',     a:'Sub. H',             hf:'⚽',af:'⚽',et:'6:00 PM', v:'Hard Rock, Miami'},
+  {d:'2026-07-03',s:'R32',h:'1ro. K',     a:'3ro. DEIJL',         hf:'⚽',af:'⚽',et:'9:30 PM', v:'Arrowhead, Kansas City'},
+  // ── OCTAVOS ─────────────────────────────────
+  {d:'2026-07-04',s:'R16',h:'W73',        a:'W75',                hf:'⚽',af:'⚽',et:'1:00 PM', v:'NRG, Houston'},
+  {d:'2026-07-04',s:'R16',h:'W74',        a:'W77',                hf:'⚽',af:'⚽',et:'5:00 PM', v:'Lincoln, Filadelfia'},
+  {d:'2026-07-05',s:'R16',h:'W76',        a:'W78',                hf:'⚽',af:'⚽',et:'4:00 PM', v:'MetLife, NJ'},
+  {d:'2026-07-05',s:'R16',h:'W79',        a:'W80',                hf:'⚽',af:'⚽',et:'8:00 PM', v:'Azteca, CDMX'},
+  {d:'2026-07-06',s:'R16',h:'W83',        a:'W84',                hf:'⚽',af:'⚽',et:'3:00 PM', v:'AT&T, Arlington'},
+  {d:'2026-07-06',s:'R16',h:'W81',        a:'W82',                hf:'⚽',af:'⚽',et:'8:00 PM', v:'Lumen Field, Seattle'},
+  {d:'2026-07-07',s:'R16',h:'W86',        a:'W88',                hf:'⚽',af:'⚽',et:'12:00 PM',v:'Mercedes-Benz, Atlanta'},
+  {d:'2026-07-07',s:'R16',h:'W85',        a:'W87',                hf:'⚽',af:'⚽',et:'4:00 PM', v:'BC Place, Vancouver'},
+  // ── CUARTOS ─────────────────────────────────
+  {d:'2026-07-09',s:'QF', h:'W89',        a:'W90',                hf:'⚽',af:'⚽',et:'4:00 PM', v:'Gillette, Foxborough'},
+  {d:'2026-07-10',s:'QF', h:'W93',        a:'W94',                hf:'⚽',af:'⚽',et:'3:00 PM', v:'SoFi, Inglewood'},
+  {d:'2026-07-11',s:'QF', h:'W91',        a:'W92',                hf:'⚽',af:'⚽',et:'5:00 PM', v:'Hard Rock, Miami'},
+  {d:'2026-07-11',s:'QF', h:'W95',        a:'W96',                hf:'⚽',af:'⚽',et:'9:00 PM', v:'Arrowhead, Kansas City'},
+  // ── SEMIS ────────────────────────────────────
+  {d:'2026-07-14',s:'SF', h:'W97',        a:'W98',                hf:'⚽',af:'⚽',et:'3:00 PM', v:'AT&T, Dallas'},
+  {d:'2026-07-15',s:'SF', h:'W99',        a:'W100',               hf:'⚽',af:'⚽',et:'3:00 PM', v:'Mercedes-Benz, Atlanta'},
+  // ── 3ER LUGAR ────────────────────────────────
+  {d:'2026-07-18',s:'3P', h:'3er lugar',  a:'4to lugar',          hf:'🥉',af:'🥉',et:'5:00 PM', v:'Hard Rock, Miami'},
+  // ── GRAN FINAL ───────────────────────────────
+  {d:'2026-07-19',s:'Final',h:'Campeón SF1',a:'Campeón SF2',      hf:'🏆',af:'🏆',et:'3:00 PM', v:'MetLife, NJ'},
+];
+
+// Agregar pdt a cada partido
+const MATCHES = RAW.map(m => ({ ...m, pdt: etToPdt(m.et) }));
+
+// ── ESTADO: determinar si un partido está terminado ──────────
+// Un partido se considera "terminado" si su hora PDT ya pasó hace 2h+ 
+function isFinished(m) {
+  const now = nowTijuana(); // "YYYY-MM-DD HH:MM"
+  const mdt = matchDateTime(m); // "YYYY-MM-DD HH:MM" en PDT
+  // partido termina aprox 2h después del inicio
+  const [md, mt] = mdt.split(' ');
+  const [mh, mm] = mt.split(':').map(Number);
+  let endH = mh + 2;
+  const endStr = `${md} ${endH.toString().padStart(2,'0')}:${mm.toString().padStart(2,'0')}`;
+  return now > endStr;
+}
+
+function isUpcoming(m) {
+  const now = nowTijuana();
+  return matchDateTime(m) > now;
+}
+
+// ─── FECHAS DISPONIBLES ──────────────────────────────────────
+const allDates = [...new Set(MATCHES.map(m => m.d))].sort();
+
+// ─── STAGES ──────────────────────────────────────────────────
+const STAGES = [
+  { id:'all',   label:'Todos' },
+  { id:'group', label:'Grupos',   from:'2026-06-11', to:'2026-06-27' },
+  { id:'R32',   label:'Ronda 32', from:'2026-06-28', to:'2026-07-03' },
+  { id:'R16',   label:'Octavos',  from:'2026-07-04', to:'2026-07-07' },
+  { id:'QF',    label:'Cuartos',  from:'2026-07-09', to:'2026-07-11' },
+  { id:'SF',    label:'Semis',    from:'2026-07-14', to:'2026-07-15' },
+  { id:'Final', label:'Final',    from:'2026-07-18', to:'2026-07-19' },
+];
+
+// ─── STATE ───────────────────────────────────────────────────
+let currentStage = 'all';
+let currentDate  = null;
+
+// ─── HELPERS ─────────────────────────────────────────────────
+function filteredDates() {
+  if (currentStage === 'all') return allDates;
+  const st = STAGES.find(s => s.id === currentStage);
+  if (!st?.from) return allDates;
+  return allDates.filter(d => d >= st.from && d <= st.to);
+}
+
+function formatDatePill(ds) {
+  const [y,mo,d] = ds.split('-').map(Number);
+  const dt = new Date(y, mo-1, d);
+  const dows = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  return { day: d, dow: dows[dt.getDay()] };
+}
+
+function formatFullDate(ds) {
+  const [y,mo,d] = ds.split('-').map(Number);
+  const dt = new Date(y, mo-1, d);
+  const days  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio'];
+  return `${days[dt.getDay()]} ${d} de ${months[mo-1]}`;
+}
+
+function stageLabel(m) {
+  if (m.g) return `Grupo ${m.g}`;
+  const MAP = { R32:'Ronda de 32', R16:'Octavos de Final', QF:'Cuartos de Final',
+                SF:'Semifinal',    '3P':'Tercer Lugar',     Final:'Gran Final' };
+  return MAP[m.s] || m.s;
+}
+
+function badgeClass(m) {
+  if (m.g)         return 'group-badge';
+  if (m.s==='Final') return 'final-badge';
+  return 'ko-badge';
+}
+
+// ─── RENDER STAGE NAV ────────────────────────────────────────
+function renderStageNav() {
+  document.getElementById('stageNav').innerHTML = STAGES.map(s =>
+    `<button class="stage-btn${s.id===currentStage?' active':''}" onclick="selectStage('${s.id}')">${s.label}</button>`
+  ).join('');
+}
+
+// ─── RENDER DATE BAR ─────────────────────────────────────────
+function renderDateBar() {
+  const dates  = filteredDates();
+  const today  = todayTijuana();
+  const bar    = document.getElementById('dateBar');
+  bar.innerHTML = dates.map(d => {
+    const { day, dow } = formatDatePill(d);
+    const isToday  = d === today;
+    const isActive = d === currentDate;
+    return `<div class="date-pill${isActive?' active':''}${isToday?' is-today':''}" onclick="selectDate('${d}')">
+      <div class="pday">${day}</div>
+      <div class="pdow">${isToday ? '● HOY' : dow}</div>
+    </div>`;
+  }).join('');
+  // scroll to active pill
+  setTimeout(() => {
+    const el = bar.querySelector('.date-pill.active');
+    if (el) el.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+  }, 60);
+}
+
+// ─── RENDER MATCHES ──────────────────────────────────────────
+function renderMatches() {
+  const today    = todayTijuana();
+  const isToday  = currentDate === today;
+  const isPast   = currentDate < today;
+  const matches  = MATCHES.filter(m => m.d === currentDate);
+  const main     = document.getElementById('mainContent');
+
+  // ── Sin partidos en esta fecha ──
+  if (!matches.length) {
+    // Buscar el próximo día con partidos
+    const nextDay = allDates.find(d => d > (currentDate || today));
+    let hint = '';
+    if (nextDay) {
+      const nm = MATCHES.find(m => m.d === nextDay);
+      hint = `<div class="next-match-hint">
+        <div class="hint-label">⚡ Próximos partidos</div>
+        <div class="hint-game">${formatFullDate(nextDay)}</div>
+        <div class="hint-time">${MATCHES.filter(m=>m.d===nextDay).length} partidos · desde las ${MATCHES.filter(m=>m.d===nextDay)[0].pdt}</div>
+      </div>`;
+    }
+    main.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📅</div>
+      <div class="empty-title">Sin partidos</div>
+      <div class="empty-sub">No hay juegos programados para este día</div>
+      ${hint}
+    </div>`;
+    return;
+  }
+
+  // ── Encabezado del día ──
+  const dayLabel = isToday ? `HOY · ${formatFullDate(currentDate)}` : formatFullDate(currentDate);
+  const totalCount = matches.length;
+  const doneCount  = matches.filter(m => isFinished(m)).length;
+  let countLabel = `${totalCount} ${totalCount===1?'partido':'partidos'}`;
+  if (isPast && doneCount === totalCount) countLabel += ' · Terminados';
+  else if (doneCount > 0)                 countLabel += ` · ${doneCount} terminados`;
+
+  let html = `<div class="day-header">
+    <div class="day-title">${dayLabel}</div>
+    <div class="match-count">${countLabel}</div>
+  </div>`;
+
+  // Nota de resultados para días pasados
+  if (isPast) {
+    html += `<div class="results-note">
+      📊 Los marcadores mostrados son ilustrativos. Para resultados reales visita 
+      <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026" target="_blank">FIFA.com</a>
+    </div>`;
+  }
+
+  // ── Agrupar por stage key ──
+  let lastStageKey = null;
+  matches.forEach(m => {
+    const sk = m.g || m.s;
+    const sl = stageLabel(m);
+    if (sk !== lastStageKey) {
+      lastStageKey = sk;
+      html += `<div class="stage-divider">${sl}</div>`;
+    }
+
+    const finished  = isFinished(m);
+    const upcoming  = isUpcoming(m);
+    const isFinal   = m.s === 'Final';
+
+    // Estado del partido
+    let statusBadge = '';
+    if (finished) {
+      statusBadge = `<span class="status-badge done">✓ Terminado</span>`;
+    } else if (isToday && !upcoming) {
+      statusBadge = `<span class="status-badge" style="background:#1a0a00;color:var(--live)">● En juego?</span>`;
+    } else if (isToday) {
+      statusBadge = `<span class="status-badge upcoming-b">Hoy ${m.pdt}</span>`;
+    }
+
+    // Card classes
+    let cardClass = 'match-card';
+    if (isToday)  cardClass += ' today-card';
+    if (upcoming && isToday) cardClass += ' upcoming';
+    if (finished) cardClass += ' finished';
+    if (isFinal)  cardClass += ' is-final';
+
+    // Centro: score o tiempo
+    let center = '';
+    if (finished && m.score) {
+      const hw = m.score.h > m.score.a;
+      const aw = m.score.a > m.score.h;
+      center = `<div class="score-display">${m.score.h}–${m.score.a}</div>
+                <div class="score-ft">Final</div>`;
+    } else {
+      center = `<div class="match-time">${m.pdt}</div>
+                <div class="match-vs">vs</div>`;
+    }
+
+    html += `<div class="${cardClass}">
+      <div class="match-meta">
+        <span class="${badgeClass(m)}">${sl}</span>
+        ${statusBadge}
+        <span class="venue-text">📍 ${m.v}</span>
+      </div>
+      <div class="match-body">
+        <div class="team">
+          ${flagImg(m.h)}
+          <div class="team-name">${m.h}</div>
+        </div>
+        <div class="match-center">${center}</div>
+        <div class="team away">
+          ${flagImg(m.a)}
+          <div class="team-name">${m.a}</div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  main.innerHTML = html;
+}
+
+// ─── SELECCIÓN ───────────────────────────────────────────────
+function selectStage(id) {
+  currentStage = id;
+  const dates  = filteredDates();
+  const today  = todayTijuana();
+  // Prioridad: hoy si tiene partidos → siguiente fecha → primera fecha
+  if (dates.includes(today)) {
+    currentDate = today;
+  } else {
+    currentDate = dates.find(d => d >= today) || dates[0] || null;
+  }
+  renderStageNav();
+  renderDateBar();
+  renderMatches();
+}
+
+function selectDate(d) {
+  currentDate = d;
+  renderDateBar();
+  renderMatches();
+}
+
+// ─── RELOJ ───────────────────────────────────────────────────
+function updateClock() {
+  const t = new Date().toLocaleTimeString('es-MX', {
+    timeZone: 'America/Tijuana',
+    hour: '2-digit', minute: '2-digit', hour12: true
+  });
+  document.getElementById('clock').textContent = t;
+}
+
+// ─── INIT ────────────────────────────────────────────────────
+function init() {
+  const today  = todayTijuana();
+  const todayHasMatches = MATCHES.some(m => m.d === today);
+  if (todayHasMatches) {
+    currentDate = today;
+  } else {
+    // Si hoy no hay partidos, mostrar hoy igual (mostrará "sin partidos")
+    // pero si todavía no empieza el mundial o ya terminó, ir al más cercano
+    const futureDate = allDates.find(d => d >= today);
+    currentDate = futureDate || allDates[allDates.length - 1] || today;
+    // Si hoy es antes del mundial, mostrar hoy (sin partidos + hint)
+    if (today < '2026-06-11' || today > '2026-07-19') {
+      currentDate = today;
+    }
+  }
+  renderStageNav();
+  renderDateBar();
+  renderMatches();
+  updateClock();
+  setInterval(updateClock, 15000);
+}
+
+init();
+</script>
+</body>
+</html>
