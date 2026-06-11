@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Mundial 2026 — Playas de Rosarito</title>
+<title>Mundial 2026 — Tijuana</title>
+<!-- Leaflet primero, antes que cualquier script que use L.* -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;600&display=swap');
 
@@ -80,6 +83,80 @@ header {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
+/* ── NOTIF BUTTON ────────────────────────────── */
+.notif-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 9px;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--muted);
+  transition: border-color 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+.notif-btn:hover { border-color: var(--accent); color: var(--accent); }
+.notif-btn.active { border-color: var(--accent2); color: var(--accent2); }
+
+/* ── TEAM FILTER BAR ─────────────────────────── */
+.team-filter-bar {
+  background: var(--bg);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--border);
+}
+.team-filter-bar::-webkit-scrollbar { display: none; }
+.team-filter-pill {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.team-filter-pill img { width: 18px; height: 13px; object-fit: cover; border-radius: 2px; }
+.team-filter-pill:hover { border-color: var(--accent); color: var(--text); }
+.team-filter-pill.active { background: var(--accent); border-color: var(--accent); color: #000; }
+.filter-label {
+  font-size: 0.65rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+/* ── API STATUS CHIP ─────────────────────────── */
+.api-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.62rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--surface2);
+  color: var(--muted);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.api-chip.live { background: #0d2a0d; color: var(--accent2); }
+.api-chip.err  { background: #2a0d0d; color: var(--red); }
+.api-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.api-chip.live .api-dot { animation: pulse 2s infinite; }
 
 /* ── STAGE NAV ───────────────────────────────── */
 .stage-nav {
@@ -207,6 +284,7 @@ main { padding: 14px 12px; max-width: 680px; margin: 0 auto; }
 /* final highlight */
 .match-card.is-final { border-color: var(--gold); }
 .match-card.is-final .match-time { color: var(--gold); }
+.match-card.team-highlight { border-left: 3px solid var(--accent); }
 
 /* meta row */
 .match-meta {
@@ -417,6 +495,118 @@ footer {
   .match-card { margin-bottom: 10px; }
   .match-body { padding: 12px 16px 14px; }
 }
+
+/* ── VISITOR MAP PANEL ───────────────────────── */
+.visitor-section {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 12px 24px;
+}
+.visitor-toggle {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: border-color 0.2s, color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.visitor-toggle:hover { border-color: var(--accent); color: var(--text); }
+.visitor-toggle .vt-icon { font-size: 1rem; }
+.visitor-toggle .vt-count {
+  margin-left: auto;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  color: var(--accent);
+}
+.visitor-toggle .vt-arrow { font-size: 0.65rem; transition: transform 0.2s; }
+.visitor-toggle.open .vt-arrow { transform: rotate(180deg); }
+
+.visitor-panel {
+  display: none;
+  margin-top: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.visitor-panel.open { display: block; }
+
+#visitorMap {
+  width: 100%;
+  height: 280px;
+  background: #0d1520;
+}
+@media (min-width: 600px) { #visitorMap { height: 360px; } }
+
+.visitor-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.visitor-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.72rem;
+}
+.visitor-row:last-child { border-bottom: none; }
+.visitor-flag-img { width: 20px; height: 14px; object-fit: cover; border-radius: 2px; flex-shrink: 0; }
+.visitor-loc { color: var(--text); font-weight: 600; flex: 1; }
+.visitor-time { color: var(--muted); font-size: 0.65rem; white-space: nowrap; }
+.visitor-me { background: #1a2a00; }
+.visitor-me .visitor-loc { color: var(--accent2); }
+
+.map-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 280px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  gap: 8px;
+}
+.map-spinner {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.my-location-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin: 10px 14px;
+}
+.my-location-badge .dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent2);
+  animation: pulse 2s infinite;
+}
 </style>
 </head>
 <body>
@@ -425,22 +615,79 @@ footer {
   <div class="trophy">🏆</div>
   <div class="header-text">
     <h1>Mundial 2026</h1>
-    <p>⏰ Horario Playas de Rosarito (PDT)</p>
+    <p>⏰ Horario Tijuana (PDT)</p>
   </div>
+  <button class="notif-btn" id="notifBtn" onclick="toggleNotifications()" title="Notificaciones de partidos">🔔</button>
   <div class="header-right">
     <div class="clock" id="clock">--:--</div>
-    <div class="clock-sub">Playas de Rosarito · PDT</div>
+    <div class="clock-sub">Tijuana · PDT</div>
   </div>
 </header>
 
 <nav class="stage-nav" id="stageNav"></nav>
+<div class="team-filter-bar" id="teamFilterBar">
+  <span class="filter-label">⚽</span>
+  <div class="team-filter-pill active" onclick="selectTeamFilter(null, this)">Todos</div>
+  <div class="team-filter-pill" onclick="selectTeamFilter('México', this)">
+    <img src="https://flagcdn.com/20x15/mx.png" alt=""> México
+  </div>
+  <div class="team-filter-pill" onclick="selectTeamFilter('Argentina', this)">
+    <img src="https://flagcdn.com/20x15/ar.png" alt=""> Argentina
+  </div>
+  <div class="team-filter-pill" onclick="selectTeamFilter('Brasil', this)">
+    <img src="https://flagcdn.com/20x15/br.png" alt=""> Brasil
+  </div>
+  <div class="team-filter-pill" onclick="selectTeamFilter('EUA', this)">
+    <img src="https://flagcdn.com/20x15/us.png" alt=""> EUA
+  </div>
+  <div class="team-filter-pill" onclick="selectTeamFilter('Canadá', this)">
+    <img src="https://flagcdn.com/20x15/ca.png" alt=""> Canadá
+  </div>
+  <div class="team-filter-pill" onclick="selectTeamFilter('España', this)">
+    <img src="https://flagcdn.com/20x15/es.png" alt=""> España
+  </div>
+  <div class="team-filter-pill" onclick="selectTeamFilter('Francia', this)">
+    <img src="https://flagcdn.com/20x15/fr.png" alt=""> Francia
+  </div>
+  <div class="team-filter-pill" onclick="selectTeamFilter('Alemania', this)">
+    <img src="https://flagcdn.com/20x15/de.png" alt=""> Alemania
+  </div>
+  <div class="team-filter-pill" onclick="selectTeamFilter('Portugal', this)">
+    <img src="https://flagcdn.com/20x15/pt.png" alt=""> Portugal
+  </div>
+  <div class="team-filter-pill" onclick="selectTeamFilter('Inglaterra', this)">
+    <img src="https://flagcdn.com/20x15/gb-eng.png" alt=""> Inglaterra
+  </div>
+</div>
 <div class="date-bar" id="dateBar"></div>
 
 <main id="mainContent"></main>
 
+<!-- ── VISITOR MAP SECTION ── -->
+<section class="visitor-section">
+  <button class="visitor-toggle" id="visitorToggle" onclick="toggleVisitorPanel()">
+    <span class="vt-icon">🌍</span>
+    <span>Visitantes del mundo</span>
+    <span class="vt-count" id="visitorCount">—</span>
+    <span class="vt-arrow">▼</span>
+  </button>
+  <div class="visitor-panel" id="visitorPanel">
+    <div id="visitorMap">
+      <div class="map-loading"><div class="map-spinner"></div> Cargando mapa...</div>
+    </div>
+    <div id="myLocationBadge" style="display:none">
+      <span class="my-location-badge">
+        <span class="dot"></span>
+        <span id="myLocationText">Detectando tu ubicación...</span>
+      </span>
+    </div>
+    <div class="visitor-list" id="visitorList"></div>
+  </div>
+</section>
+
 <footer>
-  ⚽ Torneo 2026 · 11 Jun – 19 Jul 2026<br>
-  Todos los horarios en PDT — Playas de Rosarito / Baja California<br>
+  ⚽ FIFA World Cup 2026 · 11 Jun – 19 Jul 2026<br>
+  Todos los horarios en PDT — Tijuana / Baja California<br>
   Los marcadores históricos son ilustrativos; actualiza la página para resultados reales.
 </footer>
 
@@ -891,6 +1138,384 @@ function updateClock() {
   document.getElementById('clock').textContent = t;
 }
 
+// ─── FILTRO POR SELECCIÓN ────────────────────────────────────
+let teamFilter = null; // null = todos
+
+function selectTeamFilter(team, el) {
+  teamFilter = team;
+  // Quitar active de todos
+  document.querySelectorAll('.team-filter-pill').forEach(p => p.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  if (team) {
+    // Buscar todas las fechas donde juega ese equipo
+    const datesWithTeam = allDates.filter(d =>
+      MATCHES.some(m => m.d === d && (m.h === team || m.a === team))
+    );
+    // Seleccionar la más próxima a hoy, o la primera
+    const today = todayTijuana();
+    const best = datesWithTeam.find(d => d >= today) || datesWithTeam[0];
+    if (best) { currentDate = best; }
+  }
+
+  renderDateBar();
+  renderMatches();
+}
+
+// Modificar filteredDates para respetar teamFilter en la barra de fechas
+const _filteredDatesOrig = filteredDates;
+function filteredDatesWithTeam() {
+  let dates = filteredDates();
+  if (!teamFilter) return dates;
+  return dates.filter(d => MATCHES.some(m => m.d === d && (m.h === teamFilter || m.a === teamFilter)));
+}
+
+// Sobreescribir renderDateBar para usar filteredDatesWithTeam
+const _renderDateBarOrig = renderDateBar;
+function renderDateBar() {
+  const dates  = filteredDatesWithTeam();
+  const today  = todayTijuana();
+  const bar    = document.getElementById('dateBar');
+  if (!bar) return;
+  bar.innerHTML = dates.map(d => {
+    const { day, dow } = formatDatePill(d);
+    const isToday  = d === today;
+    const isActive = d === currentDate;
+    return `<div class="date-pill${isActive?' active':''}${isToday?' is-today':''}" onclick="selectDate('${d}')">
+      <div class="pday">${day}</div>
+      <div class="pdow">${isToday ? '● HOY' : dow}</div>
+    </div>`;
+  }).join('');
+  setTimeout(() => {
+    const el = bar.querySelector('.date-pill.active');
+    if (el) el.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+  }, 60);
+}
+
+// Sobreescribir renderMatches para filtrar por equipo
+const _renderMatchesOrig = renderMatches;
+function renderMatches() {
+  const today    = todayTijuana();
+  const isToday  = currentDate === today;
+  const isPast   = currentDate < today;
+
+  let matches = MATCHES.filter(m => m.d === currentDate);
+  // Aplicar filtro de equipo si está activo
+  if (teamFilter) {
+    matches = matches.filter(m => m.h === teamFilter || m.a === teamFilter);
+  }
+
+  const main = document.getElementById('mainContent');
+
+  if (!matches.length) {
+    let hint = '';
+    const nextDates = teamFilter
+      ? allDates.filter(d => d > (currentDate || today) && MATCHES.some(m => m.d === d && (m.h === teamFilter || m.a === teamFilter)))
+      : allDates.filter(d => d > (currentDate || today));
+    const nextDay = nextDates[0];
+    if (nextDay) {
+      const nm = MATCHES.find(m => m.d === nextDay);
+      const count = MATCHES.filter(m => m.d === nextDay && (!teamFilter || m.h === teamFilter || m.a === teamFilter)).length;
+      hint = `<div class="next-match-hint">
+        <div class="hint-label">⚡ Próximos ${teamFilter ? 'partidos de '+teamFilter : 'partidos'}</div>
+        <div class="hint-game">${formatFullDate(nextDay)}</div>
+        <div class="hint-time">${count} ${count===1?'partido':'partidos'} · desde las ${MATCHES.filter(m=>m.d===nextDay)[0].pdt}</div>
+      </div>`;
+    }
+    main.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📅</div>
+      <div class="empty-title">Sin partidos</div>
+      <div class="empty-sub">${teamFilter ? `${teamFilter} no juega este día` : 'No hay juegos programados para este día'}</div>
+      ${hint}
+    </div>`;
+    return;
+  }
+
+  const dayLabel = isToday ? `HOY · ${formatFullDate(currentDate)}` : formatFullDate(currentDate);
+  const totalCount = matches.length;
+  const doneCount  = matches.filter(m => isFinished(m)).length;
+  let countLabel = `${totalCount} ${totalCount===1?'partido':'partidos'}`;
+  if (isPast && doneCount === totalCount) countLabel += ' · Terminados';
+  else if (doneCount > 0) countLabel += ` · ${doneCount} terminados`;
+
+  // API status chip
+  let apiChip = '';
+  if (apiStatus === 'live') apiChip = `<span class="api-chip live"><span class="api-dot"></span> Live</span>`;
+  else if (apiStatus === 'err') apiChip = `<span class="api-chip err"><span class="api-dot"></span> Sin API</span>`;
+  else apiChip = `<span class="api-chip"><span class="api-dot"></span> Cargando</span>`;
+
+  let html = `<div class="day-header">
+    <div class="day-title">${dayLabel}${isToday ? apiChip : ''}</div>
+    <div class="match-count">${countLabel}</div>
+  </div>`;
+
+  if (isPast && apiStatus !== 'live') {
+    html += `<div class="results-note">
+      📊 Para marcadores en vivo visita
+      <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026" target="_blank">FIFA.com</a>
+      — o configura tu API key en el código.
+    </div>`;
+  }
+
+  let lastStageKey = null;
+  matches.forEach(m => {
+    const sk = m.g || m.s;
+    const sl = stageLabel(m);
+    if (sk !== lastStageKey) {
+      lastStageKey = sk;
+      html += `<div class="stage-divider">${sl}</div>`;
+    }
+
+    const finished  = isFinished(m);
+    const upcoming  = isUpcoming(m);
+    const isFinal   = m.s === 'Final';
+    const isMyTeam  = teamFilter && (m.h === teamFilter || m.a === teamFilter);
+
+    let statusBadge = '';
+    if (finished) {
+      statusBadge = `<span class="status-badge done">✓ Terminado</span>`;
+    } else if (isToday && !upcoming) {
+      statusBadge = `<span class="status-badge" style="background:#1a0500;color:var(--live)">● En juego</span>`;
+    } else if (isToday) {
+      statusBadge = `<span class="status-badge upcoming-b">Hoy ${m.pdt}</span>`;
+    }
+
+    let cardClass = 'match-card';
+    if (isToday)            cardClass += ' today-card';
+    if (upcoming && isToday) cardClass += ' upcoming';
+    if (finished)           cardClass += ' finished';
+    if (isFinal)            cardClass += ' is-final';
+    if (isMyTeam && !isFinal) cardClass += ' team-highlight';
+
+    // Score en vivo si existe
+    const liveScore = liveScores[`${m.d}|${m.h}|${m.a}`];
+    let center = '';
+    if (liveScore) {
+      center = `<div class="score-display">${liveScore.h}–${liveScore.a}</div>
+                <div class="score-ft">${liveScore.status}</div>`;
+    } else if (finished && m.score) {
+      center = `<div class="score-display">${m.score.h}–${m.score.a}</div>
+                <div class="score-ft">Final</div>`;
+    } else {
+      center = `<div class="match-time">${m.pdt}</div>
+                <div class="match-vs">vs</div>`;
+    }
+
+    html += `<div class="${cardClass}">
+      <div class="match-meta">
+        <span class="${badgeClass(m)}">${sl}</span>
+        ${statusBadge}
+        <span class="venue-text">📍 ${m.v}</span>
+      </div>
+      <div class="match-body">
+        <div class="team">
+          ${flagImg(m.h)}
+          <div class="team-name">${m.h}</div>
+        </div>
+        <div class="match-center">${center}</div>
+        <div class="team away">
+          ${flagImg(m.a)}
+          <div class="team-name">${m.a}</div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  main.innerHTML = html;
+}
+
+// ─── API DE RESULTADOS ───────────────────────────────────────
+// El proxy está en Apps Script (mundial2026_visitors.gs)
+// que llama a football-data.org server-side sin problema de CORS.
+// Solo necesitas que WEBAPP_URL esté configurada abajo.
+
+let liveScores = {};   // key: "YYYY-MM-DD|Home|Away"
+let apiStatus  = 'off'; // 'off' | 'live' | 'err'
+
+async function fetchLiveScores() {
+  // Si no hay WEBAPP_URL configurada, nada que hacer
+  if (WEBAPP_URL.includes('TU_ID_AQUI')) {
+    apiStatus = 'off';
+    return;
+  }
+  try {
+    // Llamamos al proxy en Apps Script que sí puede hacer la petición server-side
+    const res  = await fetch(`${WEBAPP_URL}?action=scores`);
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+
+    if (!data.ok || !data.matches) throw new Error(data.error || 'sin datos');
+
+    liveScores = {};
+    data.matches.forEach(m => {
+      const home = normalizeTeamName(m.home);
+      const away = normalizeTeamName(m.away);
+      const key  = `${m.date}|${home}|${away}`;
+      if (m.score && (m.score.h !== null)) {
+        liveScores[key] = {
+          h: m.score.h,
+          a: m.score.a,
+          status: statusLabel(m.status)
+        };
+      }
+    });
+
+    apiStatus = 'live';
+  } catch(e) {
+    console.warn('Scores proxy:', e);
+    apiStatus = 'err';
+  }
+  renderMatches();
+}
+
+// Mapeo de nombres en inglés → español (parcial, los más comunes)
+const TEAM_NAME_MAP = {
+  'Mexico':'México','South Africa':'Sudáfrica','South Korea':'Corea del Sur',
+  'Czech Republic':'Chequia','Czechia':'Chequia','Canada':'Canadá',
+  'Bosnia and Herzegovina':'Bosnia-Herzegovina','USA':'EUA',
+  'United States':'EUA','Brazil':'Brasil','Morocco':'Marruecos',
+  'Haiti':'Haití','Scotland':'Escocia','Australia':'Australia',
+  'Turkey':'Turquía','Germany':'Alemania','Curaçao':'Curazao',
+  'Netherlands':'Países Bajos','Japan':'Japón',"Côte d'Ivoire":'Costa de Marfil',
+  'Ecuador':'Ecuador','Sweden':'Suecia','Tunisia':'Túnez','Spain':'España',
+  'Cape Verde':'Cabo Verde','Belgium':'Bélgica','Egypt':'Egipto',
+  'Saudi Arabia':'Arabia Saudita','Uruguay':'Uruguay','Iran':'Irán',
+  'New Zealand':'Nueva Zelanda','France':'Francia','Senegal':'Senegal',
+  'Iraq':'Irak','Norway':'Noruega','Argentina':'Argentina','Algeria':'Argelia',
+  'Austria':'Austria','Jordan':'Jordania','Portugal':'Portugal',
+  'DR Congo':'Rep. Dem. Congo','England':'Inglaterra','Ghana':'Ghana',
+  'Panama':'Panamá','Uzbekistan':'Uzbekistán','Colombia':'Colombia',
+  'Croatia':'Croacia','Qatar':'Qatar','Switzerland':'Suiza'
+};
+function normalizeTeamName(name) { return TEAM_NAME_MAP[name] || name; }
+
+function statusLabel(s) {
+  const MAP = {
+    'SCHEDULED':'Programado','LIVE':'En juego','IN_PLAY':'En juego',
+    'PAUSED':'Medio tiempo','FINISHED':'Final','POSTPONED':'Pospuesto',
+    'SUSPENDED':'Suspendido','CANCELLED':'Cancelado'
+  };
+  return MAP[s] || s;
+}
+
+// Refresco cada 60 segundos durante el torneo
+function startApiPolling() {
+  fetchLiveScores();
+  setInterval(fetchLiveScores, 60000);
+}
+
+// ─── NOTIFICACIONES ──────────────────────────────────────────
+let notifEnabled = false;
+let notifPermission = 'default';
+let scheduledNotifs = new Set(); // IDs de partidos ya notificados
+
+async function toggleNotifications() {
+  if (!('Notification' in window)) {
+    alert('Tu navegador no soporta notificaciones 😕');
+    return;
+  }
+
+  if (notifEnabled) {
+    // Desactivar
+    notifEnabled = false;
+    localStorage.setItem('notifEnabled', '0');
+    updateNotifBtn();
+    showToast('🔕 Notificaciones desactivadas');
+    return;
+  }
+
+  // Pedir permiso si no lo tenemos
+  if (Notification.permission === 'default') {
+    notifPermission = await Notification.requestPermission();
+  } else {
+    notifPermission = Notification.permission;
+  }
+
+  if (notifPermission === 'granted') {
+    notifEnabled = true;
+    localStorage.setItem('notifEnabled', '1');
+    updateNotifBtn();
+    scheduleMatchNotifications();
+    showToast('🔔 Te avisaré 15 min antes de cada partido');
+  } else {
+    showToast('⚠️ Activa permisos de notificaciones en tu navegador');
+  }
+}
+
+function updateNotifBtn() {
+  const btn = document.getElementById('notifBtn');
+  if (!btn) return;
+  btn.textContent = notifEnabled ? '🔔' : '🔕';
+  btn.classList.toggle('active', notifEnabled);
+  btn.title = notifEnabled ? 'Notificaciones activadas' : 'Activar notificaciones';
+}
+
+function scheduleMatchNotifications() {
+  if (!notifEnabled || Notification.permission !== 'granted') return;
+
+  const now    = Date.now();
+  const today  = todayTijuana();
+  // Solo partidos de hoy y mañana
+  const upcoming = MATCHES.filter(m => m.d >= today && !isFinished(m));
+
+  upcoming.forEach(m => {
+    const mdt = matchDateTime(m); // "YYYY-MM-DD HH:MM"
+    const [dateStr, timeStr] = mdt.split(' ');
+    const [h, min] = timeStr.split(':').map(Number);
+    const [y, mo, d] = dateStr.split('-').map(Number);
+
+    // Crear Date en zona local asumiendo que matchDateTime ya está en PDT
+    // Usamos UTC offset -7
+    const matchMs = Date.UTC(y, mo-1, d, h+7, min); // convertir PDT→UTC sumando 7h
+    const notifMs = matchMs - 15 * 60 * 1000; // 15 min antes
+    const key     = `${m.d}|${m.h}|${m.a}`;
+
+    if (notifMs > now && !scheduledNotifs.has(key)) {
+      scheduledNotifs.add(key);
+      const delay = notifMs - now;
+      setTimeout(() => {
+        if (notifEnabled && Notification.permission === 'granted') {
+          new Notification(`⚽ Partido en 15 min — Mundial 2026`, {
+            body: `${m.h} vs ${m.a}\n🕐 ${m.pdt} · ${m.v}`,
+            icon: `https://flagcdn.com/40x30/${FLAG_CODES[m.h] || 'xx'}.png`,
+            badge: 'https://flagcdn.com/20x15/un.png',
+            tag: key
+          });
+        }
+      }, delay);
+    }
+  });
+}
+
+// Toast pequeño de feedback
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = `
+      position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+      background:#1a2235;border:1px solid var(--border);border-radius:10px;
+      padding:10px 18px;font-size:0.78rem;color:var(--text);z-index:9999;
+      box-shadow:0 4px 20px rgba(0,0,0,0.5);transition:opacity 0.3s;
+    `;
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3000);
+}
+
+// Restaurar preferencia de notifs
+function restoreNotifPref() {
+  if (localStorage.getItem('notifEnabled') === '1' && Notification.permission === 'granted') {
+    notifEnabled = true;
+    updateNotifBtn();
+    scheduleMatchNotifications();
+  }
+}
+
 // ─── INIT ────────────────────────────────────────────────────
 function init() {
   const today  = todayTijuana();
@@ -898,11 +1523,8 @@ function init() {
   if (todayHasMatches) {
     currentDate = today;
   } else {
-    // Si hoy no hay partidos, mostrar hoy igual (mostrará "sin partidos")
-    // pero si todavía no empieza el mundial o ya terminó, ir al más cercano
     const futureDate = allDates.find(d => d >= today);
     currentDate = futureDate || allDates[allDates.length - 1] || today;
-    // Si hoy es antes del mundial, mostrar hoy (sin partidos + hint)
     if (today < '2026-06-11' || today > '2026-07-19') {
       currentDate = today;
     }
@@ -912,9 +1534,203 @@ function init() {
   renderMatches();
   updateClock();
   setInterval(updateClock, 15000);
+
+  // API de resultados
+  startApiPolling();
+
+  // Notificaciones
+  restoreNotifPref();
+
+  // Re-programar notificaciones cada hora
+  setInterval(scheduleMatchNotifications, 3600000);
 }
 
 init();
+</script>
+
+
+<script>
+// ════════════════════════════════════════════════════
+//  VISITOR TRACKER
+//  ⚠️  Reemplaza WEBAPP_URL con tu URL de Apps Script
+// ════════════════════════════════════════════════════
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbylJq0230VPYTD4T8uF3YYNFi1njntAoT4M2uoajeaAlUx19Lu5GN5CQi1WYnSm8_w82w/exec';
+
+let visitorMap    = null;
+let mapInitialized = false;
+let myLatLon      = null;
+let panelOpen     = false;
+
+// ── Toggle panel ────────────────────────────────────
+function toggleVisitorPanel() {
+  panelOpen = !panelOpen;
+  document.getElementById('visitorPanel').classList.toggle('open', panelOpen);
+  document.getElementById('visitorToggle').classList.toggle('open', panelOpen);
+  if (panelOpen && !mapInitialized) {
+    initMap();
+    loadVisitors();
+  }
+}
+
+// ── Inicializar mapa Leaflet ─────────────────────────
+function initMap() {
+  mapInitialized = true;
+  document.getElementById('visitorMap').innerHTML = '';
+
+  visitorMap = L.map('visitorMap', {
+    center: [20, 0], zoom: 2,
+    zoomControl: true,
+    attributionControl: false
+  });
+
+  // Tile oscuro, sin key
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 18
+  }).addTo(visitorMap);
+
+  L.control.attribution({ prefix: false })
+    .addAttribution('© CartoDB')
+    .addTo(visitorMap);
+}
+
+// ── Marcar un visitante en el mapa ──────────────────
+function addMarker(lat, lon, label, isMe) {
+  const color  = isMe ? '#2ecc71' : '#e8c23a';
+  const size   = isMe ? 14 : 10;
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="
+      width:${size}px;height:${size}px;
+      background:${color};
+      border-radius:50%;
+      border:2px solid rgba(255,255,255,0.4);
+      box-shadow:0 0 6px ${color};
+    "></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2]
+  });
+  const marker = L.marker([lat, lon], { icon }).addTo(visitorMap);
+  marker.bindPopup(`<div style="font-family:Inter,sans-serif;font-size:12px;color:#0a0f1a">${label}</div>`);
+  return marker;
+}
+
+// ── Cargar visitantes desde Apps Script ─────────────
+async function loadVisitors() {
+  try {
+    const res  = await fetch(WEBAPP_URL);
+    const data = await res.json();
+    const visitors = data.visitors || [];
+
+    document.getElementById('visitorCount').textContent = visitors.length;
+    renderVisitorList(visitors);
+
+    if (visitorMap) {
+      visitors.forEach(v => {
+        const isMe = myLatLon &&
+          Math.abs(v.lat - myLatLon[0]) < 0.5 &&
+          Math.abs(v.lon - myLatLon[1]) < 0.5;
+        const label = `${v.city || ''}${v.city ? ', ' : ''}${v.country}`;
+        addMarker(v.lat, v.lon, label, isMe);
+      });
+
+      // Si hay mi ubicación, centrar ahí
+      if (myLatLon) {
+        visitorMap.setView(myLatLon, 5, { animate: true });
+      } else if (visitors.length > 0) {
+        const bounds = visitors.map(v => [v.lat, v.lon]);
+        visitorMap.fitBounds(bounds, { padding: [30, 30] });
+      }
+    }
+  } catch(e) {
+    console.warn('No se pudo cargar visitantes:', e);
+    document.getElementById('visitorCount').textContent = '?';
+  }
+}
+
+// ── Lista de visitantes ──────────────────────────────
+function renderVisitorList(visitors) {
+  const list = document.getElementById('visitorList');
+  if (!visitors.length) {
+    list.innerHTML = '<div class="visitor-row"><span class="visitor-loc">Sin registros aún</span></div>';
+    return;
+  }
+
+  // Ordenar: más recientes primero
+  const sorted = [...visitors].sort((a,b) => new Date(b.ts) - new Date(a.ts));
+
+  list.innerHTML = sorted.slice(0, 50).map(v => {
+    const code   = FLAG_CODES[v.country] || '';
+    const flag   = code
+      ? `<img class="visitor-flag-img" src="https://flagcdn.com/20x15/${code}.png" alt="">`
+      : '🌐';
+    const label  = [v.city, v.region, v.country].filter(Boolean).join(', ');
+    const ts     = v.ts ? timeAgo(new Date(v.ts)) : '';
+    const isMe   = myLatLon &&
+      Math.abs(v.lat - myLatLon[0]) < 0.5 &&
+      Math.abs(v.lon - myLatLon[1]) < 0.5;
+    return `<div class="visitor-row${isMe?' visitor-me':''}">
+      ${flag}
+      <span class="visitor-loc">${label}${isMe ? ' 📍 (tú)' : ''}</span>
+      <span class="visitor-time">${ts}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── Tiempo relativo ──────────────────────────────────
+function timeAgo(date) {
+  const diff = Math.floor((Date.now() - date) / 1000);
+  if (diff < 60)         return 'ahora';
+  if (diff < 3600)       return `hace ${Math.floor(diff/60)}min`;
+  if (diff < 86400)      return `hace ${Math.floor(diff/3600)}h`;
+  return `hace ${Math.floor(diff/86400)}d`;
+}
+
+// ── Detectar IP y geolocalizar ───────────────────────
+async function trackVisitor() {
+  if (WEBAPP_URL.includes('TU_ID_AQUI')) return;
+  try {
+    // Llamamos al proxy — Apps Script hace la petición a ip-api.com server-side
+    const res = await fetch(`${WEBAPP_URL}?action=geoip`);
+    const data = await res.json();
+    if (!data.ok) return;
+    const geo = data.geo;
+
+    myLatLon = [geo.lat, geo.lon];
+
+    const badge = document.getElementById('myLocationBadge');
+    const text  = document.getElementById('myLocationText');
+    badge.style.display = 'block';
+    text.textContent = `Tu ubicación: ${geo.city}, ${geo.country}`;
+
+    // Guardar visita en la hoja (POST)
+    await fetch(WEBAPP_URL, {
+      method: 'POST',
+      mode:   'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ip:      geo.query,
+        country: geo.country,
+        region:  geo.regionName,
+        city:    geo.city,
+        lat:     geo.lat,
+        lon:     geo.lon,
+        isp:     geo.isp,
+        ua:      navigator.userAgent.slice(0, 120)
+      })
+    });
+
+    if (panelOpen && visitorMap) {
+      addMarker(geo.lat, geo.lon, `${geo.city}, ${geo.country} (tú)`, true);
+      visitorMap.setView([geo.lat, geo.lon], 5, { animate: true });
+    }
+
+  } catch(e) {
+    console.warn('Geolocalización falló:', e);
+  }
+}
+
+// Ejecutar tracker al cargar (no bloquea nada)
+trackVisitor();
 </script>
 </body>
 </html>
