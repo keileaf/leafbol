@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Mundial 2026 — Tijuana</title>
+<title>Torneo 2026 — Playas de Rosarito</title>
 <!-- Leaflet primero, antes que cualquier script que use L.* -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -615,12 +615,12 @@ footer {
   <div class="trophy">🏆</div>
   <div class="header-text">
     <h1>Mundial 2026</h1>
-    <p>⏰ Horario Tijuana (PDT)</p>
+    <p>⏰ Horario de Playas de Rosarito (PDT)</p>
   </div>
   <button class="notif-btn" id="notifBtn" onclick="toggleNotifications()" title="Notificaciones de partidos">🔔</button>
   <div class="header-right">
     <div class="clock" id="clock">--:--</div>
-    <div class="clock-sub">Tijuana · PDT</div>
+    <div class="clock-sub">Playas de Rosarito · PDT</div>
   </div>
 </header>
 
@@ -686,8 +686,8 @@ footer {
 </section>
 
 <footer>
-  ⚽ FIFA World Cup 2026 · 11 Jun – 19 Jul 2026<br>
-  Todos los horarios en PDT — Tijuana / Baja California<br>
+  ⚽ Torneo 2026 · 11 Jun – 19 Jul 2026<br>
+  Todos los horarios en PDT — Playas de Rosarito / Baja California<br>
   Los marcadores históricos son ilustrativos; actualiza la página para resultados reales.
 </footer>
 
@@ -1037,7 +1037,7 @@ function renderMatches() {
   if (isPast) {
     html += `<div class="results-note">
       📊 Los marcadores mostrados son ilustrativos. Para resultados reales visita 
-      <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026" target="_blank">FIFA.com</a>
+      <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026" target="_blank"> FUT</a>
     </div>`;
   }
 
@@ -1252,7 +1252,7 @@ function renderMatches() {
   if (isPast && apiStatus !== 'live') {
     html += `<div class="results-note">
       📊 Para marcadores en vivo visita
-      <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026" target="_blank">FIFA.com</a>
+      <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026" target="_blank">FUT</a>
       — o configura tu API key en el código.
     </div>`;
   }
