@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Torneo 2026 — Playas de Rosarito</title>
+<title>Playas de Rosarito</title>
 <!-- Leaflet primero, antes que cualquier script que use L.* -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -106,39 +106,87 @@ header {
   padding: 8px 12px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  overflow-x: auto;
-  scrollbar-width: none;
+  gap: 8px;
   border-bottom: 1px solid var(--border);
+  position: relative;
 }
-.team-filter-bar::-webkit-scrollbar { display: none; }
-.team-filter-pill {
-  flex-shrink: 0;
+.team-search-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 320px;
+}
+.team-search-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 7px 32px 7px 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.team-search-input::placeholder { color: var(--muted); }
+.team-search-input:focus { border-color: var(--accent); }
+.team-search-icon {
+  position: absolute;
+  right: 10px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+  pointer-events: none;
+  color: var(--muted);
+}
+.team-search-clear {
+  position: absolute;
+  right: 10px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none;
+  color: var(--muted); font-size: 1rem;
+  cursor: pointer; padding: 0;
+  display: none;
+}
+.team-search-clear.visible { display: block; }
+.team-search-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 200;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  display: none;
+}
+.team-search-results.open { display: block; }
+.search-result-item {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 600;
+  gap: 8px;
+  padding: 8px 12px;
   cursor: pointer;
-  transition: all 0.18s;
-  white-space: nowrap;
+  font-size: 0.8rem;
+  transition: background 0.15s;
 }
-.team-filter-pill img { width: 18px; height: 13px; object-fit: cover; border-radius: 2px; }
-.team-filter-pill:hover { border-color: var(--accent); color: var(--text); }
-.team-filter-pill.active { background: var(--accent); border-color: var(--accent); color: #000; }
-.filter-label {
-  font-size: 0.65rem;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 0 4px;
+.search-result-item:hover { background: var(--surface2); }
+.search-result-item img { width: 22px; height: 16px; object-fit: cover; border-radius: 2px; }
+.search-result-item .match-info { font-size: 0.65rem; color: var(--muted); margin-left: auto; }
+.filter-active-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: var(--accent);
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #000;
+  cursor: pointer;
   flex-shrink: 0;
 }
+.filter-active-pill img { width: 18px; height: 13px; object-fit: cover; border-radius: 2px; filter: brightness(0); }
+.filter-active-pill .clear-x { font-size: 0.9rem; opacity: 0.6; }
 
 /* ── API STATUS CHIP ─────────────────────────── */
 .api-chip {
@@ -615,49 +663,27 @@ footer {
   <div class="trophy">🏆</div>
   <div class="header-text">
     <h1>Mundial 2026</h1>
-    <p>⏰ Horario de Playas de Rosarito (PDT)</p>
+    <p>⏰ Horario Playas de Rosarito</p>
   </div>
   <button class="notif-btn" id="notifBtn" onclick="toggleNotifications()" title="Notificaciones de partidos">🔔</button>
   <div class="header-right">
     <div class="clock" id="clock">--:--</div>
-    <div class="clock-sub">Playas de Rosarito · PDT</div>
+    <div class="clock-sub">Playas de Rosarito</div>
   </div>
 </header>
 
 <nav class="stage-nav" id="stageNav"></nav>
 <div class="team-filter-bar" id="teamFilterBar">
-  <span class="filter-label">⚽</span>
-  <div class="team-filter-pill active" onclick="selectTeamFilter(null, this)">Todos</div>
-  <div class="team-filter-pill" onclick="selectTeamFilter('México', this)">
-    <img src="https://flagcdn.com/20x15/mx.png" alt=""> México
+  <div class="team-search-wrap">
+    <input class="team-search-input" id="teamSearchInput"
+      type="text" placeholder="🔍 Buscar selección..." autocomplete="off"
+      oninput="onTeamSearch(this.value)"
+      onfocus="openSearchResults()"
+    >
+    <button class="team-search-clear" id="teamSearchClear" onclick="clearTeamFilter()">✕</button>
+    <div class="team-search-results" id="teamSearchResults"></div>
   </div>
-  <div class="team-filter-pill" onclick="selectTeamFilter('Argentina', this)">
-    <img src="https://flagcdn.com/20x15/ar.png" alt=""> Argentina
-  </div>
-  <div class="team-filter-pill" onclick="selectTeamFilter('Brasil', this)">
-    <img src="https://flagcdn.com/20x15/br.png" alt=""> Brasil
-  </div>
-  <div class="team-filter-pill" onclick="selectTeamFilter('EUA', this)">
-    <img src="https://flagcdn.com/20x15/us.png" alt=""> EUA
-  </div>
-  <div class="team-filter-pill" onclick="selectTeamFilter('Canadá', this)">
-    <img src="https://flagcdn.com/20x15/ca.png" alt=""> Canadá
-  </div>
-  <div class="team-filter-pill" onclick="selectTeamFilter('España', this)">
-    <img src="https://flagcdn.com/20x15/es.png" alt=""> España
-  </div>
-  <div class="team-filter-pill" onclick="selectTeamFilter('Francia', this)">
-    <img src="https://flagcdn.com/20x15/fr.png" alt=""> Francia
-  </div>
-  <div class="team-filter-pill" onclick="selectTeamFilter('Alemania', this)">
-    <img src="https://flagcdn.com/20x15/de.png" alt=""> Alemania
-  </div>
-  <div class="team-filter-pill" onclick="selectTeamFilter('Portugal', this)">
-    <img src="https://flagcdn.com/20x15/pt.png" alt=""> Portugal
-  </div>
-  <div class="team-filter-pill" onclick="selectTeamFilter('Inglaterra', this)">
-    <img src="https://flagcdn.com/20x15/gb-eng.png" alt=""> Inglaterra
-  </div>
+  <div id="filterActivePill" style="display:none"></div>
 </div>
 <div class="date-bar" id="dateBar"></div>
 
@@ -686,7 +712,7 @@ footer {
 </section>
 
 <footer>
-  ⚽ Torneo 2026 · 11 Jun – 19 Jul 2026<br>
+  ⚽ Torteno 2026 · 11 Jun – 19 Jul 2026<br>
   Todos los horarios en PDT — Playas de Rosarito / Baja California<br>
   Los marcadores históricos son ilustrativos; actualiza la página para resultados reales.
 </footer>
@@ -1037,7 +1063,7 @@ function renderMatches() {
   if (isPast) {
     html += `<div class="results-note">
       📊 Los marcadores mostrados son ilustrativos. Para resultados reales visita 
-      <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026" target="_blank"> FUT</a>
+      <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026" target="_blank"> Torneo </a>
     </div>`;
   }
 
@@ -1138,32 +1164,109 @@ function updateClock() {
   document.getElementById('clock').textContent = t;
 }
 
-// ─── FILTRO POR SELECCIÓN ────────────────────────────────────
-let teamFilter = null; // null = todos
+// ─── FILTRO POR SELECCIÓN — BUSCADOR ────────────────────────
+// Lista de todos los países clasificados (los que tienen partidos en MATCHES)
+const ALL_TEAMS = [...new Set(
+  MATCHES.filter(m => m.g) // solo fase de grupos (tienen nombres reales)
+    .flatMap(m => [m.h, m.a])
+)].sort((a, b) => a.localeCompare(b, 'es'));
 
-function selectTeamFilter(team, el) {
-  teamFilter = team;
-  // Quitar active de todos
-  document.querySelectorAll('.team-filter-pill').forEach(p => p.classList.remove('active'));
-  if (el) el.classList.add('active');
+let teamFilter    = null;
+let searchOpen    = false;
+
+function onTeamSearch(val) {
+  const q = val.trim().toLowerCase();
+  const clearBtn = document.getElementById('teamSearchClear');
+  clearBtn.classList.toggle('visible', q.length > 0);
+
+  if (!q) {
+    document.getElementById('teamSearchResults').classList.remove('open');
+    return;
+  }
+  const filtered = ALL_TEAMS.filter(t => t.toLowerCase().includes(q));
+  renderSearchResults(filtered);
+}
+
+function openSearchResults() {
+  searchOpen = true;
+  // Mostrar todos si el input está vacío
+  const val = document.getElementById('teamSearchInput').value.trim();
+  if (!val) renderSearchResults(ALL_TEAMS);
+}
+
+function renderSearchResults(teams) {
+  const box = document.getElementById('teamSearchResults');
+  if (!teams.length) {
+    box.innerHTML = '<div class="search-result-item" style="color:var(--muted)">Sin resultados</div>';
+  } else {
+    box.innerHTML = teams.map(t => {
+      const code = FLAG_CODES[t];
+      const flag = code ? `<img src="https://flagcdn.com/20x15/${code}.png" alt="">` : '🏳';
+      const count = MATCHES.filter(m => m.h === t || m.a === t).length;
+      return `<div class="search-result-item" onclick="selectTeamFilter('${t.replace(/'/g,"\\'")}')">
+        ${flag} ${t}
+        <span class="match-info">${count} partidos</span>
+      </div>`;
+    }).join('');
+  }
+  box.classList.add('open');
+}
+
+function selectTeamFilter(team) {
+  teamFilter = team || null;
+
+  // Cerrar dropdown
+  document.getElementById('teamSearchResults').classList.remove('open');
+  document.getElementById('teamSearchInput').value = team || '';
+
+  const clearBtn = document.getElementById('teamSearchClear');
+  const pill     = document.getElementById('filterActivePill');
 
   if (team) {
-    // Buscar todas las fechas donde juega ese equipo
+    clearBtn.classList.add('visible');
+    const code = FLAG_CODES[team];
+    const flag = code ? `<img src="https://flagcdn.com/20x15/${code}.png" alt="">` : '';
+    pill.style.display = 'flex';
+    pill.innerHTML = `<div class="filter-active-pill" onclick="clearTeamFilter()">
+      ${flag} ${team} <span class="clear-x">✕</span>
+    </div>`;
+    document.getElementById('teamSearchInput').value = '';
+    clearBtn.classList.remove('visible');
+
+    // Ir a la fecha más próxima donde juega ese equipo
+    const today = todayTijuana();
     const datesWithTeam = allDates.filter(d =>
       MATCHES.some(m => m.d === d && (m.h === team || m.a === team))
     );
-    // Seleccionar la más próxima a hoy, o la primera
-    const today = todayTijuana();
     const best = datesWithTeam.find(d => d >= today) || datesWithTeam[0];
-    if (best) { currentDate = best; }
+    if (best) currentDate = best;
+  } else {
+    clearTeamFilter();
+    return;
   }
 
   renderDateBar();
   renderMatches();
 }
 
-// Modificar filteredDates para respetar teamFilter en la barra de fechas
-const _filteredDatesOrig = filteredDates;
+function clearTeamFilter() {
+  teamFilter = null;
+  document.getElementById('teamSearchInput').value = '';
+  document.getElementById('teamSearchClear').classList.remove('visible');
+  document.getElementById('filterActivePill').style.display = 'none';
+  document.getElementById('teamSearchResults').classList.remove('open');
+  renderDateBar();
+  renderMatches();
+}
+
+// Cerrar dropdown al hacer click afuera
+document.addEventListener('click', e => {
+  if (!e.target.closest('#teamFilterBar')) {
+    document.getElementById('teamSearchResults').classList.remove('open');
+  }
+});
+
+// Sobreescribir filteredDates para respetar teamFilter
 function filteredDatesWithTeam() {
   let dates = filteredDates();
   if (!teamFilter) return dates;
@@ -1252,7 +1355,7 @@ function renderMatches() {
   if (isPast && apiStatus !== 'live') {
     html += `<div class="results-note">
       📊 Para marcadores en vivo visita
-      <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026" target="_blank">FUT</a>
+      <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026" target="_blank">Toreneo</a>
       — o configura tu API key en el código.
     </div>`;
   }
@@ -1550,8 +1653,11 @@ init();
 
 
 <script>
-
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby6-h-kERm9Xrze6zAlLhdtTYjhm0eXfP_rIzSc9C4r14MSxlZer4PKeTbbDDUnYWdFWw/exec';
+// ════════════════════════════════════════════════════
+//  VISITOR TRACKER
+//  ⚠️  Reemplaza WEBAPP_URL con tu URL de Apps Script
+// ════════════════════════════════════════════════════
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzwQUWC2RVSjHx349yzIBXgHS04jhmvzNcBR-_ERfZbQzKY8uN2Rl_X7O9EQk2PCqRAoQ/exec';
 
 let visitorMap    = null;
 let mapInitialized = false;
@@ -1684,10 +1790,13 @@ function timeAgo(date) {
 
 // ── Detectar IP y geolocalizar ───────────────────────
 async function trackVisitor() {
-  if (WEBAPP_URL.includes('TU_ID_AQUI')) return;
   try {
-    // Llamamos al proxy — Apps Script hace la petición a ip-api.com server-side
-    const res = await fetch(`${WEBAPP_URL}?action=geoip`);
+    // Paso 1: obtener la IP pública del visitante (ipify sí permite CORS desde browser)
+    const ipRes = await fetch('https://api.ipify.org?format=json');
+    const { ip } = await ipRes.json();
+
+    // Paso 2: pasar la IP al proxy de Apps Script para que ip-api.com la geolocalice
+    const res  = await fetch(`${WEBAPP_URL}?action=geoip&ip=${ip}`);
     const data = await res.json();
     if (!data.ok) return;
     const geo = data.geo;
@@ -1696,16 +1805,16 @@ async function trackVisitor() {
 
     const badge = document.getElementById('myLocationBadge');
     const text  = document.getElementById('myLocationText');
-    badge.style.display = 'block';
-    text.textContent = `Tu ubicación: ${geo.city}, ${geo.country}`;
+    if (badge) { badge.style.display = 'block'; }
+    if (text)  { text.textContent = `Tu ubicación: ${geo.city}, ${geo.country}`; }
 
-    // Guardar visita en la hoja (POST)
+    // Paso 3: guardar visita en la hoja (POST)
     await fetch(WEBAPP_URL, {
       method: 'POST',
       mode:   'no-cors',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        ip:      geo.query,
+        ip:      ip,
         country: geo.country,
         region:  geo.regionName,
         city:    geo.city,
