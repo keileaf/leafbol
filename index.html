@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Playas de Rosarito</title>
+<title>Mundial 2026 — Tijuana</title>
 <!-- Leaflet primero, antes que cualquier script que use L.* -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -663,12 +663,12 @@ footer {
   <div class="trophy">🏆</div>
   <div class="header-text">
     <h1>Mundial 2026</h1>
-    <p>⏰ Horario Playas de Rosarito</p>
+    <p id="tzLabel">⏰ Horario local</p>
   </div>
   <button class="notif-btn" id="notifBtn" onclick="toggleNotifications()" title="Notificaciones de partidos">🔔</button>
   <div class="header-right">
     <div class="clock" id="clock">--:--</div>
-    <div class="clock-sub">Playas de Rosarito</div>
+    <div class="clock-sub" id="clockSub">Hora local</div>
   </div>
 </header>
 
@@ -712,47 +712,86 @@ footer {
 </section>
 
 <footer>
-  ⚽ Torteno 2026 · 11 Jun – 19 Jul 2026<br>
-  Todos los horarios en PDT — Playas de Rosarito / Baja California<br>
-  Los marcadores históricos son ilustrativos; actualiza la página para resultados reales.
+  ⚽ Torneo 2026 · 11 Jun – 19 Jul 2026<br>
+  <span id="footerTz">Horarios en tu zona horaria local</span>
 </footer>
 
 <script>
 // ════════════════════════════════════════════════════
-//  UTILS: conversión ET → PDT
-//  ET verano = UTC-4 | PDT = UTC-7 → ET - 3h
+//  ZONA HORARIA LOCAL DEL VISITANTE
+//  Los partidos están en ET (UTC-4 verano).
+//  Convertimos a UTC y mostramos en la zona del browser.
 // ════════════════════════════════════════════════════
-function etToPdt(etStr) {
+
+// Zona detectada del browser
+const USER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const USER_TZ_SHORT = (() => {
+  try {
+    // Nombre corto: "PDT", "CEST", "JST", etc.
+    return new Intl.DateTimeFormat('en', { timeZoneName:'short', timeZone: USER_TZ })
+      .formatToParts(new Date()).find(p => p.type === 'timeZoneName').value;
+  } catch(_) { return 'Local'; }
+})();
+
+// Convierte "YYYY-MM-DD" + "HH:MM AM/PM" ET → Date UTC
+function etToDate(dateStr, etStr) {
   const [time, ampm] = etStr.split(' ');
   let [h, m] = time.split(':').map(Number);
   if (ampm === 'PM' && h !== 12) h += 12;
   if (ampm === 'AM' && h === 12) h = 0;
-  h -= 3;
-  if (h < 0) h += 24;
-  const suf = h >= 12 ? 'PM' : 'AM';
-  const h12 = h % 12 || 12;
-  return `${h12}:${m.toString().padStart(2,'0')} ${suf}`;
+  // ET verano = UTC-4 → sumar 4h para obtener UTC
+  const [y, mo, d] = dateStr.split('-').map(Number);
+  return new Date(Date.UTC(y, mo - 1, d, h + 4, m));
 }
 
-// PDT datetime para comparación: devuelve "YYYY-MM-DD HH:MM" en Tijuana
-function nowTijuana() {
+// Formatea un Date en la zona del usuario: "3:00 PM"
+function formatLocalTime(date) {
+  return date.toLocaleTimeString([], {
+    timeZone: USER_TZ,
+    hour: 'numeric', minute: '2-digit', hour12: true
+  });
+}
+
+// Fecha local del usuario para saber "hoy"
+function todayLocal() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: USER_TZ }); // "YYYY-MM-DD"
+}
+
+function nowLocal() {
   return new Date().toLocaleString('en-CA', {
-    timeZone: 'America/Tijuana',
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', hour12: false
+    timeZone: USER_TZ,
+    year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', hour12: false
   }).replace(',', '');
 }
-function todayTijuana() { return nowTijuana().slice(0, 10); }
 
-// Devuelve "YYYY-MM-DD HH:MM" de un partido para comparar
+// Compatibilidad: mantener todayTijuana apuntando a todayLocal
+function todayTijuana() { return todayLocal(); }
+function nowTijuana()   { return nowLocal(); }
+
+// Para comparar si un partido ya pasó: usamos el Date UTC real
+function matchDateUTC(m) {
+  return etToDate(m.d, m.et);
+}
+
+function isFinished(m) {
+  // terminado si han pasado 2h desde el inicio
+  return Date.now() > matchDateUTC(m).getTime() + 2 * 60 * 60 * 1000;
+}
+
+function isUpcoming(m) {
+  return Date.now() < matchDateUTC(m).getTime();
+}
+
+// Reemplaza matchDateTime (se usaba para notificaciones)
 function matchDateTime(m) {
-  const [time, ampm] = m.et.split(' ');
-  let [h, min] = time.split(':').map(Number);
-  if (ampm === 'PM' && h !== 12) h += 12;
-  if (ampm === 'AM' && h === 12) h = 0;
-  h -= 3; // ET → PDT
-  if (h < 0) h += 24;
-  return `${m.date} ${h.toString().padStart(2,'0')}:${min.toString().padStart(2,'0')}`;
+  const dt = matchDateUTC(m);
+  const local = dt.toLocaleString('en-CA', {
+    timeZone: USER_TZ,
+    year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', hour12: false
+  }).replace(',', '');
+  return local;
 }
 
 // ════════════════════════════════════════════════════
@@ -785,8 +824,8 @@ function flagImg(team) {
 const RAW = [
   // ── FASE DE GRUPOS ──────────────────────────────
   // Jun 11
-  {d:'2026-06-11',g:'A',h:'México',       a:'Sudáfrica',          hf:'🇲🇽',af:'🇿🇦',et:'3:00 PM', v:'Azteca, CDMX'},
-  {d:'2026-06-11',g:'A',h:'Corea del Sur',a:'Chequia',            hf:'🇰🇷',af:'🇨🇿',et:'10:00 PM',v:'Akron, Zapopan'},
+  {d:'2026-06-11',g:'A',h:'México',       a:'Sudáfrica',          hf:'🇲🇽',af:'🇿🇦',et:'3:00 PM', v:'Azteca, CDMX',        score:{h:2,a:0}},
+  {d:'2026-06-11',g:'A',h:'Corea del Sur',a:'Chequia',            hf:'🇰🇷',af:'🇨🇿',et:'10:00 PM',v:'Akron, Zapopan',       score:{h:2,a:1}},
   // Jun 12
   {d:'2026-06-12',g:'B',h:'Canadá',       a:'Bosnia-Herzegovina', hf:'🇨🇦',af:'🇧🇦',et:'3:00 PM', v:'BMO Field, Toronto'},
   {d:'2026-06-12',g:'D',h:'EUA',          a:'Paraguay',           hf:'🇺🇸',af:'🇵🇾',et:'9:00 PM', v:'SoFi, Inglewood'},
@@ -913,8 +952,12 @@ const RAW = [
   {d:'2026-07-19',s:'Final',h:'Campeón SF1',a:'Campeón SF2',      hf:'🏆',af:'🏆',et:'3:00 PM', v:'MetLife, NJ'},
 ];
 
-// Agregar pdt a cada partido
-const MATCHES = RAW.map(m => ({ ...m, pdt: etToPdt(m.et) }));
+// Calcular hora local del visitante para cada partido
+const MATCHES = RAW.map(m => ({
+  ...m,
+  pdt: formatLocalTime(etToDate(m.d, m.et)),         // hora en zona del visitor
+  _utc: etToDate(m.d, m.et).getTime()                // ms UTC para comparaciones
+}));
 
 // ── ESTADO: determinar si un partido está terminado ──────────
 // Un partido se considera "terminado" si su hora PDT ya pasó hace 2h+ 
@@ -1063,7 +1106,7 @@ function renderMatches() {
   if (isPast) {
     html += `<div class="results-note">
       📊 Los marcadores mostrados son ilustrativos. Para resultados reales visita 
-      <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026" target="_blank"> Torneo </a>
+      <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026" target="_blank">FIFA.com</a>
     </div>`;
   }
 
@@ -1157,11 +1200,19 @@ function selectDate(d) {
 
 // ─── RELOJ ───────────────────────────────────────────────────
 function updateClock() {
-  const t = new Date().toLocaleTimeString('es-MX', {
-    timeZone: 'America/Tijuana',
+  const t = new Date().toLocaleTimeString([], {
+    timeZone: USER_TZ,
     hour: '2-digit', minute: '2-digit', hour12: true
   });
   document.getElementById('clock').textContent = t;
+}
+
+function initTimezoneLabels() {
+  // Nombre legible de la zona: "America/Tijuana" → "Tijuana"
+  const tzShort = USER_TZ.split('/').pop().replace(/_/g, ' ');
+  document.getElementById('tzLabel').textContent   = `⏰ ${USER_TZ_SHORT} — ${tzShort}`;
+  document.getElementById('clockSub').textContent  = `${tzShort} · ${USER_TZ_SHORT}`;
+  document.getElementById('footerTz').textContent  = `Horarios en tu zona horaria · ${USER_TZ} (${USER_TZ_SHORT})`;
 }
 
 // ─── FILTRO POR SELECCIÓN — BUSCADOR ────────────────────────
@@ -1354,9 +1405,8 @@ function renderMatches() {
 
   if (isPast && apiStatus !== 'live') {
     html += `<div class="results-note">
-      📊 Para marcadores en vivo visita
-      <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026" target="_blank">Toreneo</a>
-      — o configura tu API key en el código.
+      📊 Marcadores del día. Para estadísticas detalladas: 
+      <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026" target="_blank">FIFA.com</a>
     </div>`;
   }
 
@@ -1635,6 +1685,7 @@ function init() {
   renderStageNav();
   renderDateBar();
   renderMatches();
+  initTimezoneLabels();
   updateClock();
   setInterval(updateClock, 15000);
 
@@ -1657,7 +1708,7 @@ init();
 //  VISITOR TRACKER
 //  ⚠️  Reemplaza WEBAPP_URL con tu URL de Apps Script
 // ════════════════════════════════════════════════════
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzwQUWC2RVSjHx349yzIBXgHS04jhmvzNcBR-_ERfZbQzKY8uN2Rl_X7O9EQk2PCqRAoQ/exec';
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzeBgGitAZlpObIlrISzkSdhoJK9U_MyXoENjpcddXaptJ11cNivdoCFOF8hmp6grDZnw/exec';
 
 let visitorMap    = null;
 let mapInitialized = false;
@@ -1789,45 +1840,44 @@ function timeAgo(date) {
 }
 
 // ── Detectar IP y geolocalizar ───────────────────────
+// ipinfo.io tiene CORS abierto → funciona desde GitHub Pages sin proxy
 async function trackVisitor() {
   try {
-    // Paso 1: obtener la IP pública del visitante (ipify sí permite CORS desde browser)
-    const ipRes = await fetch('https://api.ipify.org?format=json');
-    const { ip } = await ipRes.json();
+    // ipinfo.io: CORS abierto, tier gratis 50k req/mes, devuelve geo completo
+    const res = await fetch('https://ipinfo.io/json');
+    if (!res.ok) throw new Error(`ipinfo ${res.status}`);
+    const info = await res.json();
 
-    // Paso 2: pasar la IP al proxy de Apps Script para que ip-api.com la geolocalice
-    const res  = await fetch(`${WEBAPP_URL}?action=geoip&ip=${ip}`);
-    const data = await res.json();
-    if (!data.ok) return;
-    const geo = data.geo;
+    // info = { ip, city, region, country, loc:"lat,lon", org }
+    const [lat, lon] = (info.loc || '0,0').split(',').map(Number);
+    if (!lat && !lon) throw new Error('Sin coordenadas');
 
-    myLatLon = [geo.lat, geo.lon];
+    myLatLon = [lat, lon];
 
     const badge = document.getElementById('myLocationBadge');
     const text  = document.getElementById('myLocationText');
-    if (badge) { badge.style.display = 'block'; }
-    if (text)  { text.textContent = `Tu ubicación: ${geo.city}, ${geo.country}`; }
+    if (badge) badge.style.display = 'block';
+    if (text)  text.textContent = `Tu ubicación: ${info.city}, ${info.country}`;
 
-    // Paso 3: guardar visita en la hoja (POST)
-    await fetch(WEBAPP_URL, {
-      method: 'POST',
-      mode:   'no-cors',
+    // Guardar en la hoja via Apps Script (POST no-cors)
+    fetch(WEBAPP_URL, {
+      method:  'POST',
+      mode:    'no-cors',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        ip:      ip,
-        country: geo.country,
-        region:  geo.regionName,
-        city:    geo.city,
-        lat:     geo.lat,
-        lon:     geo.lon,
-        isp:     geo.isp,
+        ip:      info.ip,
+        country: info.country,
+        region:  info.region,
+        city:    info.city,
+        lat, lon,
+        isp:     info.org || '',
         ua:      navigator.userAgent.slice(0, 120)
       })
     });
 
     if (panelOpen && visitorMap) {
-      addMarker(geo.lat, geo.lon, `${geo.city}, ${geo.country} (tú)`, true);
-      visitorMap.setView([geo.lat, geo.lon], 5, { animate: true });
+      addMarker(lat, lon, `${info.city}, ${info.country} (tú)`, true);
+      visitorMap.setView([lat, lon], 5, { animate: true });
     }
 
   } catch(e) {
