@@ -1538,7 +1538,7 @@ const TEAM_NAME_MAP = {
   'Czech Republic':'Chequia','Czechia':'Chequia','Czech Rep.':'Chequia',
   'Canada':'Canadá','Bosnia and Herzegovina':'Bosnia-Herzegovina',
   'Bosnia & Herzegovina':'Bosnia-Herzegovina','Bosnia-Herzegovina':'Bosnia-Herzegovina',
-  'USA':'EUA','United States':'EUA','US':'EUA',
+  'USA':'EUA','United States':'EUA','US':'EUA','U.S.':'EUA','USMNT':'EUA',
   'Brazil':'Brasil','Morocco':'Marruecos',
   'Haiti':'Haití','Scotland':'Escocia','Australia':'Australia',
   'Turkey':'Turquía','Türkiye':'Turquía','Germany':'Alemania',
@@ -1581,11 +1581,9 @@ function normalizeTeamName(name) {
 function findMatch(homeName, awayName) {
   const h = normalizeTeamName(homeName);
   const a = normalizeTeamName(awayName);
+  // Búsqueda exacta después de normalizar
   return MATCHES.find(mx =>
     normalizeTeamName(mx.h) === h && normalizeTeamName(mx.a) === a
-  ) || MATCHES.find(mx =>
-    mx.h.toLowerCase().includes(h.toLowerCase()) ||
-    h.toLowerCase().includes(mx.h.toLowerCase())
   );
 }
 
@@ -1754,7 +1752,7 @@ init();
 //  VISITOR TRACKER
 //  ⚠️  Reemplaza WEBAPP_URL con tu URL de Apps Script
 // ════════════════════════════════════════════════════
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbx512P2CzPsuY3vT6xzL321_kPiQI4Dj9qVI3J0fUPYC7P5hgZal6GMGPDArNS8Kgf6Gw/exec';
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxHmgexyyHqswlhOYiDZ-SXuVEGq67BfrT6IA9FNjUFjTsr4UidAoxxzImjkp1M8epzLg/exec';
 
 let visitorMap    = null;
 let mapInitialized = false;
