@@ -712,7 +712,7 @@ footer {
 </section>
 
 <footer>
-  ⚽ Torneo 2026 · 11 Jun – 19 Jul 2026<br>
+  ⚽ FIFA World Cup 2026 · 11 Jun – 19 Jul 2026<br>
   <span id="footerTz">Horarios en tu zona horaria local</span>
 </footer>
 
@@ -1486,31 +1486,30 @@ let liveScores = {};   // key: "YYYY-MM-DD|Home|Away"
 let apiStatus  = 'off'; // 'off' | 'live' | 'err'
 
 async function fetchLiveScores() {
-  // Si no hay WEBAPP_URL configurada, nada que hacer
-  if (WEBAPP_URL.includes('TU_ID_AQUI')) {
-    apiStatus = 'off';
-    return;
-  }
   try {
-    // Llamamos al proxy en Apps Script que sí puede hacer la petición server-side
     const res  = await fetch(`${WEBAPP_URL}?action=scores`);
-    if (!res.ok) throw new Error(res.status);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-
     if (!data.ok || !data.matches) throw new Error(data.error || 'sin datos');
 
     liveScores = {};
     data.matches.forEach(m => {
+      if (!m.score) return;
+      // openfootball usa nombres en inglés → normalizar a español
       const home = normalizeTeamName(m.home);
       const away = normalizeTeamName(m.away);
-      const key  = `${m.date}|${home}|${away}`;
-      if (m.score && (m.score.h !== null)) {
-        liveScores[key] = {
-          h: m.score.h,
-          a: m.score.a,
-          status: statusLabel(m.status)
-        };
-      }
+      // Buscar la fecha correcta en nuestros datos
+      const match = MATCHES.find(mx =>
+        (normalizeTeamName(mx.h) === home || mx.h === home) &&
+        (normalizeTeamName(mx.a) === away || mx.a === away)
+      );
+      if (!match) return;
+      const key = `${match.d}|${match.h}|${match.a}`;
+      liveScores[key] = {
+        h:      m.score.h,
+        a:      m.score.a,
+        status: m.finished ? 'Final' : 'En juego'
+      };
     });
 
     apiStatus = 'live';
@@ -1708,7 +1707,7 @@ init();
 //  VISITOR TRACKER
 //  ⚠️  Reemplaza WEBAPP_URL con tu URL de Apps Script
 // ════════════════════════════════════════════════════
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzeBgGitAZlpObIlrISzkSdhoJK9U_MyXoENjpcddXaptJ11cNivdoCFOF8hmp6grDZnw/exec';
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz7dCLqTkN75D-yoY2z-R4U-OPpiIOyJKnG7UwnIs48Ur0x_JrvMzh_IUBsXTdPrn6u2g/exec';
 
 let visitorMap    = null;
 let mapInitialized = false;
