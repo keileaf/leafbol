@@ -827,7 +827,7 @@ const RAW = [
   {d:'2026-06-11',g:'A',h:'México',       a:'Sudáfrica',          hf:'🇲🇽',af:'🇿🇦',et:'3:00 PM', v:'Azteca, CDMX',        score:{h:2,a:0}},
   {d:'2026-06-11',g:'A',h:'Corea del Sur',a:'Chequia',            hf:'🇰🇷',af:'🇨🇿',et:'10:00 PM',v:'Akron, Zapopan',       score:{h:2,a:1}},
   // Jun 12
-  {d:'2026-06-12',g:'B',h:'Canadá',       a:'Bosnia-Herzegovina', hf:'🇨🇦',af:'🇧🇦',et:'3:00 PM', v:'BMO Field, Toronto'},
+  {d:'2026-06-12',g:'B',h:'Canadá',       a:'Bosnia-Herzegovina', hf:'🇨🇦',af:'🇧🇦',et:'3:00 PM', v:'BMO Field, Toronto',   score:{h:1,a:1}},
   {d:'2026-06-12',g:'D',h:'EUA',          a:'Paraguay',           hf:'🇺🇸',af:'🇵🇾',et:'9:00 PM', v:'SoFi, Inglewood'},
   // Jun 13
   {d:'2026-06-13',g:'B',h:'Qatar',        a:'Suiza',              hf:'🇶🇦',af:'🇨🇭',et:'3:00 PM', v:"Levi's, Santa Clara"},
@@ -1440,12 +1440,15 @@ function renderMatches() {
     if (isFinal)            cardClass += ' is-final';
     if (isMyTeam && !isFinal) cardClass += ' team-highlight';
 
-    // Score en vivo si existe
+    // Score en vivo (ESPN) o hardcodeado
     const liveScore = liveScores[`${m.d}|${m.h}|${m.a}`];
     let center = '';
     if (liveScore) {
-      center = `<div class="score-display">${liveScore.h}–${liveScore.a}</div>
-                <div class="score-ft">${liveScore.status}</div>`;
+      const isLive     = liveScore.state === 'in';
+      const scoreColor = isLive ? 'var(--live)' : 'var(--accent2)';
+      const clockLabel = liveScore.detail || liveScore.clock || (liveScore.state === 'post' ? 'Final' : '');
+      center = `<div class="score-display" style="color:${scoreColor}">${liveScore.h}–${liveScore.a}</div>
+                <div class="score-ft" style="${isLive ? 'color:var(--live)' : ''}">${clockLabel}</div>`;
     } else if (finished && m.score) {
       center = `<div class="score-display">${m.score.h}–${m.score.a}</div>
                 <div class="score-ft">Final</div>`;
@@ -1494,25 +1497,31 @@ async function fetchLiveScores() {
 
     liveScores = {};
     data.matches.forEach(m => {
-      if (!m.score) return;
-      // openfootball usa nombres en inglés → normalizar a español
-      const home = normalizeTeamName(m.home);
-      const away = normalizeTeamName(m.away);
-      // Buscar la fecha correcta en nuestros datos
-      const match = MATCHES.find(mx =>
-        (normalizeTeamName(mx.h) === home || mx.h === home) &&
-        (normalizeTeamName(mx.a) === away || mx.a === away)
-      );
-      if (!match) return;
+      if (m.state === 'pre') return;
+
+      const match = findMatch(m.home, m.away);
+      if (!match) {
+        console.log('ESPN no encontrado:', m.home, 'vs', m.away);
+        return;
+      }
+
       const key = `${match.d}|${match.h}|${match.a}`;
       liveScores[key] = {
-        h:      m.score.h,
-        a:      m.score.a,
-        status: m.finished ? 'Final' : 'En juego'
+        h:      m.homeScore,
+        a:      m.awayScore,
+        state:  m.state,
+        clock:  m.clock,
+        detail: m.detail
       };
+      console.log('✅ Score:', match.h, m.homeScore, '-', m.awayScore, match.a, '|', m.detail);
     });
 
     apiStatus = 'live';
+
+    // Si hay partidos en vivo, refrescar cada 30s; si no, cada 60s
+    clearInterval(pollInterval);
+    pollInterval = setInterval(fetchLiveScores, data.hasLive ? 30000 : 60000);
+
   } catch(e) {
     console.warn('Scores proxy:', e);
     apiStatus = 'err';
@@ -1520,26 +1529,65 @@ async function fetchLiveScores() {
   renderMatches();
 }
 
+let pollInterval = null;
+
 // Mapeo de nombres en inglés → español (parcial, los más comunes)
 const TEAM_NAME_MAP = {
+  // ESPN usa estos nombres exactos
   'Mexico':'México','South Africa':'Sudáfrica','South Korea':'Corea del Sur',
-  'Czech Republic':'Chequia','Czechia':'Chequia','Canada':'Canadá',
-  'Bosnia and Herzegovina':'Bosnia-Herzegovina','USA':'EUA',
-  'United States':'EUA','Brazil':'Brasil','Morocco':'Marruecos',
+  'Czech Republic':'Chequia','Czechia':'Chequia','Czech Rep.':'Chequia',
+  'Canada':'Canadá','Bosnia and Herzegovina':'Bosnia-Herzegovina',
+  'Bosnia & Herzegovina':'Bosnia-Herzegovina','Bosnia-Herzegovina':'Bosnia-Herzegovina',
+  'USA':'EUA','United States':'EUA','US':'EUA',
+  'Brazil':'Brasil','Morocco':'Marruecos',
   'Haiti':'Haití','Scotland':'Escocia','Australia':'Australia',
-  'Turkey':'Turquía','Germany':'Alemania','Curaçao':'Curazao',
-  'Netherlands':'Países Bajos','Japan':'Japón',"Côte d'Ivoire":'Costa de Marfil',
+  'Turkey':'Turquía','Türkiye':'Turquía','Germany':'Alemania',
+  'Curaçao':'Curazao','Curacao':'Curazao',
+  'Netherlands':'Países Bajos','Japan':'Japón',
+  "Côte d'Ivoire":'Costa de Marfil',"Cote d'Ivoire":'Costa de Marfil',
+  'Ivory Coast':'Costa de Marfil',
   'Ecuador':'Ecuador','Sweden':'Suecia','Tunisia':'Túnez','Spain':'España',
   'Cape Verde':'Cabo Verde','Belgium':'Bélgica','Egypt':'Egipto',
   'Saudi Arabia':'Arabia Saudita','Uruguay':'Uruguay','Iran':'Irán',
   'New Zealand':'Nueva Zelanda','France':'Francia','Senegal':'Senegal',
   'Iraq':'Irak','Norway':'Noruega','Argentina':'Argentina','Algeria':'Argelia',
   'Austria':'Austria','Jordan':'Jordania','Portugal':'Portugal',
-  'DR Congo':'Rep. Dem. Congo','England':'Inglaterra','Ghana':'Ghana',
+  'DR Congo':'Rep. Dem. Congo','Congo DR':'Rep. Dem. Congo',
+  'Democratic Republic of Congo':'Rep. Dem. Congo',
+  'England':'Inglaterra','Ghana':'Ghana',
   'Panama':'Panamá','Uzbekistan':'Uzbekistán','Colombia':'Colombia',
-  'Croatia':'Croacia','Qatar':'Qatar','Switzerland':'Suiza'
+  'Croatia':'Croacia','Qatar':'Qatar','Switzerland':'Suiza',
+  'Paraguay':'Paraguay','New Zealand':'Nueva Zelanda',
+  'Cabo Verde':'Cabo Verde','Cape Verde Islands':'Cabo Verde'
 };
-function normalizeTeamName(name) { return TEAM_NAME_MAP[name] || name; }
+
+function normalizeTeamName(name) {
+  if (!name) return '';
+  // Búsqueda exacta primero
+  if (TEAM_NAME_MAP[name]) return TEAM_NAME_MAP[name];
+  // Búsqueda case-insensitive
+  const lower = name.toLowerCase();
+  for (const [k, v] of Object.entries(TEAM_NAME_MAP)) {
+    if (k.toLowerCase() === lower) return v;
+  }
+  // Búsqueda por inclusión parcial (para nombres como "Bosnia and Herz...")
+  for (const [k, v] of Object.entries(TEAM_NAME_MAP)) {
+    if (lower.includes(k.toLowerCase()) || k.toLowerCase().includes(lower)) return v;
+  }
+  return name;
+}
+
+// Busca el partido en MATCHES de forma flexible
+function findMatch(homeName, awayName) {
+  const h = normalizeTeamName(homeName);
+  const a = normalizeTeamName(awayName);
+  return MATCHES.find(mx =>
+    normalizeTeamName(mx.h) === h && normalizeTeamName(mx.a) === a
+  ) || MATCHES.find(mx =>
+    mx.h.toLowerCase().includes(h.toLowerCase()) ||
+    h.toLowerCase().includes(mx.h.toLowerCase())
+  );
+}
 
 function statusLabel(s) {
   const MAP = {
@@ -1550,10 +1598,9 @@ function statusLabel(s) {
   return MAP[s] || s;
 }
 
-// Refresco cada 60 segundos durante el torneo
 function startApiPolling() {
-  fetchLiveScores();
-  setInterval(fetchLiveScores, 60000);
+  fetchLiveScores(); // primera llamada inmediata
+  // el intervalo se maneja dinámicamente dentro de fetchLiveScores
 }
 
 // ─── NOTIFICACIONES ──────────────────────────────────────────
