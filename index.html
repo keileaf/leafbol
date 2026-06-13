@@ -1484,7 +1484,7 @@ function renderMatches() {
 // El proxy está en Apps Script (mundial2026_visitors.gs)
 // que llama a football-data.org server-side sin problema de CORS.
 // Solo necesitas que WEBAPP_URL esté configurada abajo.
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxHmgexyyHqswlhOYiDZ-SXuVEGq67BfrT6IA9FNjUFjTsr4UidAoxxzImjkp1M8epzLg/exec';
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxiW9uYqaO2Xgl7c9bzR56D3gKHlaEMyBeWg1Vud9mLjMGXn5YGa4gEZbwNp2BUW5F7VA/exec';
 
 let liveScores = {};   // key: "YYYY-MM-DD|Home|Away"
 let apiStatus  = 'off'; // 'off' | 'live' | 'err'
@@ -1494,32 +1494,31 @@ async function fetchLiveScores() {
     const res  = await fetch(`${WEBAPP_URL}?action=scores`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    if (!data.ok || !data.matches) throw new Error(data.error || 'sin datos');
+    if (!data.ok) throw new Error(data.error || 'sin datos');
 
     liveScores = {};
-    data.matches.forEach(m => {
-      if (m.state === 'pre') return;
 
+    // 1. Históricos guardados en Sheets (resultados permanentes)
+    (data.saved || []).forEach(m => {
       const match = findMatch(m.home, m.away);
-      if (!match) {
-        console.log('ESPN no encontrado:', m.home, 'vs', m.away);
-        return;
-      }
-
+      if (!match) return;
       const key = `${match.d}|${match.h}|${match.a}`;
-      liveScores[key] = {
-        h:      m.homeScore,
-        a:      m.awayScore,
-        state:  m.state,
-        clock:  m.clock,
-        detail: m.detail
-      };
-      console.log('✅ Score:', match.h, m.homeScore, '-', m.awayScore, match.a, '|', m.detail);
+      if (!match.score) { // no sobreescribir scores hardcodeados
+        liveScores[key] = { h: m.homeScore, a: m.awayScore, state: 'post', detail: 'FT' };
+      }
+    });
+
+    // 2. Scores en vivo de ESPN (sobreescribe con dato más reciente)
+    (data.matches || []).forEach(m => {
+      if (m.state === 'pre') return;
+      const match = findMatch(m.home, m.away);
+      if (!match) { console.log('ESPN no encontrado:', m.home, 'vs', m.away); return; }
+      const key = `${match.d}|${match.h}|${match.a}`;
+      liveScores[key] = { h: m.homeScore, a: m.awayScore, state: m.state, detail: m.detail };
+      console.log('✅', match.h, m.homeScore, '-', m.awayScore, match.a, '|', m.detail);
     });
 
     apiStatus = 'live';
-
-    // Si hay partidos en vivo, refrescar cada 30s; si no, cada 60s
     clearInterval(pollInterval);
     pollInterval = setInterval(fetchLiveScores, data.hasLive ? 30000 : 60000);
 
