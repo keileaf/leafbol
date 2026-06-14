@@ -517,6 +517,155 @@ main { padding: 14px 12px; max-width: 680px; margin: 0 auto; }
 }
 .results-note a { color: var(--accent); text-decoration: none; }
 
+/* ── STANDINGS BUTTON ────────────────────────── */
+.standings-btn {
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--text);
+  transition: border-color 0.2s, background 0.2s;
+  line-height: 1;
+}
+.standings-btn:hover { border-color: var(--accent); background: var(--surface2); }
+
+/* ── STANDINGS MODAL ─────────────────────────── */
+.standings-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 300;
+  backdrop-filter: blur(3px);
+}
+.standings-overlay.open { display: block; }
+.standings-modal {
+  display: none;
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(95vw, 520px);
+  max-height: 85vh;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  z-index: 301;
+  overflow: hidden;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.standings-modal.open { display: flex; }
+.standings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.standings-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+  color: var(--accent);
+}
+.standings-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.2s;
+}
+.standings-close:hover { color: var(--text); }
+.group-selector {
+  display: flex;
+  gap: 4px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.group-selector::-webkit-scrollbar { display: none; }
+.grp-btn {
+  flex-shrink: 0;
+  padding: 5px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.grp-btn:hover { border-color: var(--accent); color: var(--text); }
+.grp-btn.active { background: var(--accent); border-color: var(--accent); color: #000; }
+.standings-table-wrap {
+  overflow-y: auto;
+  flex: 1;
+  padding: 12px;
+}
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+.standings-table th {
+  text-align: center;
+  padding: 6px 4px;
+  color: var(--muted);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+}
+.standings-table th:first-child { text-align: left; padding-left: 8px; }
+.standings-table td {
+  text-align: center;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.standings-table td:first-child { text-align: left; padding-left: 4px; }
+.standings-table tr:last-child td { border-bottom: none; }
+.standings-table tr.qualified td { color: var(--accent2); }
+.standings-table tr.qualified-3rd td { color: var(--accent); }
+.std-team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.std-team img { width: 20px; height: 14px; object-fit: cover; border-radius: 2px; }
+.std-pos {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem;
+  color: var(--muted);
+  min-width: 16px;
+  text-align: center;
+}
+.std-pts {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  color: var(--accent);
+}
+.std-note {
+  font-size: 0.65rem;
+  color: var(--muted);
+  padding: 8px 4px 2px;
+  display: flex;
+  gap: 12px;
+}
+.std-note span { display: flex; align-items: center; gap: 4px; }
+.std-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
 /* ── FOOTER ──────────────────────────────────── */
 footer {
   text-align: center;
@@ -684,6 +833,7 @@ footer {
     <div class="team-search-results" id="teamSearchResults"></div>
   </div>
   <div id="filterActivePill" style="display:none"></div>
+  <button class="standings-btn" onclick="openStandings()" title="Tabla de posiciones">📊</button>
 </div>
 <div class="date-bar" id="dateBar"></div>
 
@@ -710,6 +860,17 @@ footer {
     <div class="visitor-list" id="visitorList"></div>
   </div>
 </section>
+
+<!-- ── STANDINGS MODAL ── -->
+<div class="standings-overlay" id="standingsOverlay" onclick="closeStandings()"></div>
+<div class="standings-modal" id="standingsModal">
+  <div class="standings-header">
+    <span class="standings-title">📊 Tabla de Posiciones</span>
+    <button class="standings-close" onclick="closeStandings()">✕</button>
+  </div>
+  <div class="group-selector" id="groupSelector"></div>
+  <div class="standings-table-wrap" id="standingsTableWrap"></div>
+</div>
 
 <footer>
   ⚽ FIFA World Cup 2026 · 11 Jun – 19 Jul 2026<br>
@@ -1447,18 +1608,17 @@ function renderMatches() {
     if (isFinal)            cardClass += ' is-final';
     if (isMyTeam && !isFinal) cardClass += ' team-highlight';
 
-    // Score en vivo (ESPN) o hardcodeado
     let center = '';
     if (liveScore) {
       const isLive     = liveScore.state === 'in';
       const scoreColor = isLive ? 'var(--live)' : 'var(--accent2)';
-      const clockLabel = liveScore.detail === 'FT' ? 'Final' 
+      const clockLabel = liveScore.detail === 'FT' ? 'Final'
                        : liveScore.detail === 'HT' ? 'Medio tiempo'
                        : liveScore.detail || (liveScore.state === 'post' ? 'Final' : '');
       center = `<div class="score-display" style="color:${scoreColor}">${liveScore.h}–${liveScore.a}</div>
                 <div class="score-ft" style="${isLive ? 'color:var(--live)' : ''}">${clockLabel}</div>`;
     } else if (finished && m.score) {
-      center = `<div class="score-display">${m.score.h}–${m.score.a}</div>
+      center = `<div class="score-display" style="color:var(--accent2)">${m.score.h}–${m.score.a}</div>
                 <div class="score-ft">Final</div>`;
     } else {
       center = `<div class="match-time">${m.pdt}</div>
@@ -1492,7 +1652,7 @@ function renderMatches() {
 // El proxy está en Apps Script (mundial2026_visitors.gs)
 // que llama a football-data.org server-side sin problema de CORS.
 // Solo necesitas que WEBAPP_URL esté configurada abajo.
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz0LS18Gxy5qkxjwcttsqsKU7zmpiWnRQH7SGzwDmwJJ5Ftx4eq39AZZm1rkmhSNUwT4A/exec';
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzut_CA0hRD_BwY5OhYpJWJP_xV5W4-GdCwg101KcCf-mpIHtkhmHrP-PpDIlNCdUqarg/exec';
 
 let liveScores = {};   // key: "YYYY-MM-DD|Home|Away"
 let apiStatus  = 'off'; // 'off' | 'live' | 'err'
@@ -1719,6 +1879,125 @@ function restoreNotifPref() {
     updateNotifBtn();
     scheduleMatchNotifications();
   }
+}
+
+// ─── TABLA DE POSICIONES ─────────────────────────────────────
+const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+let currentGroup = 'A';
+
+function openStandings() {
+  renderGroupSelector();
+  renderStandings(currentGroup);
+  document.getElementById('standingsOverlay').classList.add('open');
+  document.getElementById('standingsModal').classList.add('open');
+}
+
+function closeStandings() {
+  document.getElementById('standingsOverlay').classList.remove('open');
+  document.getElementById('standingsModal').classList.remove('open');
+}
+
+function renderGroupSelector() {
+  const wrap = document.getElementById('groupSelector');
+  wrap.innerHTML = GROUPS.map(g =>
+    `<button class="grp-btn${g === currentGroup ? ' active' : ''}" onclick="selectGroup('${g}')">${g}</button>`
+  ).join('');
+}
+
+function selectGroup(g) {
+  currentGroup = g;
+  renderGroupSelector();
+  renderStandings(g);
+}
+
+function calcStandings(group) {
+  // Obtener equipos del grupo
+  const groupMatches = MATCHES.filter(m => m.g === group);
+  const teams = [...new Set(groupMatches.flatMap(m => [m.h, m.a]))];
+
+  // Inicializar stats
+  const stats = {};
+  teams.forEach(t => {
+    stats[t] = { team: t, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0, dif: 0, pts: 0 };
+  });
+
+  // Calcular con scores hardcodeados o de liveScores
+  groupMatches.forEach(m => {
+    const key = `${m.d}|${m.h}|${m.a}`;
+    const ls  = liveScores[key];
+    let sh = null, sa = null;
+
+    if (ls && (ls.state === 'post' || ls.detail === 'FT' || ls.detail === 'Final')) {
+      sh = ls.h; sa = ls.a;
+    } else if (m.score) {
+      sh = m.score.h; sa = m.score.a;
+    }
+
+    if (sh === null || sa === null) return; // no jugado aún
+
+    const home = stats[m.h];
+    const away = stats[m.a];
+    home.pj++; away.pj++;
+    home.gf += sh; home.gc += sa;
+    away.gf += sa; away.gc += sh;
+
+    if (sh > sa) {
+      home.g++; home.pts += 3;
+      away.p++;
+    } else if (sh === sa) {
+      home.e++; home.pts++;
+      away.e++; away.pts++;
+    } else {
+      away.g++; away.pts += 3;
+      home.p++;
+    }
+    home.dif = home.gf - home.gc;
+    away.dif = away.gf - away.gc;
+  });
+
+  // Ordenar: pts → dif → gf
+  return Object.values(stats).sort((a, b) =>
+    b.pts - a.pts || b.dif - a.dif || b.gf - a.gf
+  );
+}
+
+function renderStandings(group) {
+  const rows  = calcStandings(group);
+  const wrap  = document.getElementById('standingsTableWrap');
+
+  let html = `<table class="standings-table">
+    <thead>
+      <tr>
+        <th colspan="2">Equipo</th>
+        <th>PJ</th><th>G</th><th>E</th><th>P</th>
+        <th>GF</th><th>GC</th><th>DIF</th>
+        <th class="std-pts">PTS</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  rows.forEach((r, i) => {
+    const code = FLAG_CODES[r.team];
+    const flag = code ? `<img src="https://flagcdn.com/20x15/${code}.png" alt="">` : '';
+    // Top 2 clasifican directo, posición 3 puede clasificar como mejor 3ro
+    const rowClass = i < 2 ? 'qualified' : i === 2 ? 'qualified-3rd' : '';
+    html += `<tr class="${rowClass}">
+      <td><span class="std-pos">${i+1}</span></td>
+      <td><div class="std-team">${flag}<span>${r.team}</span></div></td>
+      <td>${r.pj}</td><td>${r.g}</td><td>${r.e}</td><td>${r.p}</td>
+      <td>${r.gf}</td><td>${r.gc}</td>
+      <td>${r.dif > 0 ? '+'+r.dif : r.dif}</td>
+      <td class="std-pts">${r.pts}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>
+    <div class="std-note">
+      <span><span class="std-dot" style="background:var(--accent2)"></span> Clasificado</span>
+      <span><span class="std-dot" style="background:var(--accent)"></span> Posible mejor 3ro</span>
+    </div>`;
+
+  wrap.innerHTML = html;
 }
 
 // ─── INIT ────────────────────────────────────────────────────
