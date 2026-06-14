@@ -1425,8 +1425,15 @@ function renderMatches() {
     const isMyTeam  = teamFilter && (m.h === teamFilter || m.a === teamFilter);
 
     let statusBadge = '';
-    if (finished) {
-      statusBadge = `<span class="status-badge done">✓ Terminado</span>`;
+    const liveScore = liveScores[`${m.d}|${m.h}|${m.a}`];
+    const hasScore  = liveScore || (finished && m.score);
+
+    if (liveScore && liveScore.state === 'post') {
+      statusBadge = `<span class="status-badge done">✓ Final · ${liveScore.h}–${liveScore.a}</span>`;
+    } else if (finished && m.score) {
+      statusBadge = `<span class="status-badge done">✓ Final · ${m.score.h}–${m.score.a}</span>`;
+    } else if (liveScore && liveScore.state === 'in') {
+      statusBadge = `<span class="status-badge" style="background:#1a0500;color:var(--live)">● En juego · ${liveScore.h}–${liveScore.a}</span>`;
     } else if (isToday && !upcoming) {
       statusBadge = `<span class="status-badge" style="background:#1a0500;color:var(--live)">● En juego</span>`;
     } else if (isToday) {
@@ -1441,12 +1448,13 @@ function renderMatches() {
     if (isMyTeam && !isFinal) cardClass += ' team-highlight';
 
     // Score en vivo (ESPN) o hardcodeado
-    const liveScore = liveScores[`${m.d}|${m.h}|${m.a}`];
     let center = '';
     if (liveScore) {
       const isLive     = liveScore.state === 'in';
       const scoreColor = isLive ? 'var(--live)' : 'var(--accent2)';
-      const clockLabel = liveScore.detail || liveScore.clock || (liveScore.state === 'post' ? 'Final' : '');
+      const clockLabel = liveScore.detail === 'FT' ? 'Final' 
+                       : liveScore.detail === 'HT' ? 'Medio tiempo'
+                       : liveScore.detail || (liveScore.state === 'post' ? 'Final' : '');
       center = `<div class="score-display" style="color:${scoreColor}">${liveScore.h}–${liveScore.a}</div>
                 <div class="score-ft" style="${isLive ? 'color:var(--live)' : ''}">${clockLabel}</div>`;
     } else if (finished && m.score) {
