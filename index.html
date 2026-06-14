@@ -823,56 +823,56 @@ function flagImg(team) {
 // ════════════════════════════════════════════════════
 const RAW = [
   // ── FASE DE GRUPOS ──────────────────────────────
-  // Jun 11
-  {d:'2026-06-11',g:'A',h:'México',       a:'Sudáfrica',          hf:'🇲🇽',af:'🇿🇦',et:'3:00 PM', v:'Azteca, CDMX',        score:{h:2,a:0}},
-  {d:'2026-06-11',g:'A',h:'Corea del Sur',a:'Chequia',            hf:'🇰🇷',af:'🇨🇿',et:'10:00 PM',v:'Akron, Zapopan',       score:{h:2,a:1}},
-  // Jun 12
-  {d:'2026-06-12',g:'B',h:'Canadá',       a:'Bosnia-Herzegovina', hf:'🇨🇦',af:'🇧🇦',et:'3:00 PM', v:'BMO Field, Toronto',   score:{h:1,a:1}},
-  {d:'2026-06-12',g:'D',h:'EUA',          a:'Paraguay',           hf:'🇺🇸',af:'🇵🇾',et:'9:00 PM', v:'SoFi, Inglewood'},
-  // Jun 13
-  {d:'2026-06-13',g:'B',h:'Qatar',        a:'Suiza',              hf:'🇶🇦',af:'🇨🇭',et:'3:00 PM', v:"Levi's, Santa Clara"},
-  {d:'2026-06-13',g:'C',h:'Brasil',       a:'Marruecos',          hf:'🇧🇷',af:'🇲🇦',et:'6:00 PM', v:'MetLife, NJ'},
-  {d:'2026-06-13',g:'C',h:'Haití',        a:'Escocia',            hf:'🇭🇹',af:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',et:'9:00 PM', v:'Gillette, Foxborough'},
-  // Jun 14
-  {d:'2026-06-14',g:'D',h:'Australia',    a:'Turquía',            hf:'🇦🇺',af:'🇹🇷',et:'9:00 PM',v:'BC Place, Vancouver'},
-  {d:'2026-06-14',g:'E',h:'Alemania',     a:'Curazao',            hf:'🇩🇪',af:'🇨🇼',et:'1:00 PM', v:'NRG, Houston'},
-  {d:'2026-06-14',g:'F',h:'Países Bajos', a:'Japón',              hf:'🇳🇱',af:'🇯🇵',et:'4:00 PM', v:'AT&T, Arlington'},
-  {d:'2026-06-14',g:'E',h:'Costa de Marfil',a:'Ecuador',          hf:'🇨🇮',af:'🇪🇨',et:'7:00 PM', v:'Lincoln, Filadelfia'},
-  {d:'2026-06-14',g:'F',h:'Suecia',       a:'Túnez',              hf:'🇸🇪',af:'🇹🇳',et:'10:00 PM',v:'BBVA, Monterrey'},
-  // Jun 15
-  {d:'2026-06-15',g:'H',h:'España',       a:'Cabo Verde',         hf:'🇪🇸',af:'🇨🇻',et:'12:00 PM',v:'Mercedes-Benz, Atlanta'},
-  {d:'2026-06-15',g:'G',h:'Bélgica',      a:'Egipto',             hf:'🇧🇪',af:'🇪🇬',et:'3:00 PM', v:'Lumen Field, Seattle'},
-  {d:'2026-06-15',g:'H',h:'Arabia Saudita',a:'Uruguay',           hf:'🇸🇦',af:'🇺🇾',et:'6:00 PM', v:'Hard Rock, Miami'},
-  {d:'2026-06-15',g:'G',h:'Irán',         a:'Nueva Zelanda',      hf:'🇮🇷',af:'🇳🇿',et:'9:00 PM', v:'SoFi, Inglewood'},
-  // Jun 16
-  {d:'2026-06-16',g:'I',h:'Francia',      a:'Senegal',            hf:'🇫🇷',af:'🇸🇳',et:'3:00 PM', v:'MetLife, NJ'},
-  {d:'2026-06-16',g:'I',h:'Irak',         a:'Noruega',            hf:'🇮🇶',af:'🇳🇴',et:'6:00 PM', v:'Gillette, Foxborough'},
-  {d:'2026-06-16',g:'J',h:'Argentina',    a:'Argelia',            hf:'🇦🇷',af:'🇩🇿',et:'9:00 PM', v:'Arrowhead, Kansas City'},
-  // Jun 17
-  {d:'2026-06-17',g:'J',h:'Austria',      a:'Jordania',           hf:'🇦🇹',af:'🇯🇴',et:'12:00 AM',v:"Levi's, Santa Clara"},
-  {d:'2026-06-17',g:'K',h:'Portugal',     a:'Rep. Dem. Congo',    hf:'🇵🇹',af:'🇨🇩',et:'1:00 PM', v:'NRG, Houston'},
-  {d:'2026-06-17',g:'L',h:'Inglaterra',   a:'Croacia',            hf:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',af:'🇭🇷',et:'4:00 PM', v:'AT&T, Arlington'},
-  {d:'2026-06-17',g:'L',h:'Ghana',        a:'Panamá',             hf:'🇬🇭',af:'🇵🇦',et:'7:00 PM', v:'BMO Field, Toronto'},
-  {d:'2026-06-17',g:'K',h:'Uzbekistán',   a:'Colombia',           hf:'🇺🇿',af:'🇨🇴',et:'10:00 PM',v:'Azteca, CDMX'},
-  // Jun 18
-  {d:'2026-06-18',g:'A',h:'Chequia',      a:'Sudáfrica',          hf:'🇨🇿',af:'🇿🇦',et:'12:00 PM',v:'Mercedes-Benz, Atlanta'},
-  {d:'2026-06-18',g:'B',h:'Suiza',        a:'Bosnia-Herzegovina', hf:'🇨🇭',af:'🇧🇦',et:'3:00 PM', v:'SoFi, Inglewood'},
-  {d:'2026-06-18',g:'B',h:'Canadá',       a:'Qatar',              hf:'🇨🇦',af:'🇶🇦',et:'6:00 PM', v:'BC Place, Vancouver'},
-  {d:'2026-06-18',g:'A',h:'México',       a:'Corea del Sur',      hf:'🇲🇽',af:'🇰🇷',et:'9:00 PM', v:'Akron, Zapopan'},
-  // Jun 19
-  {d:'2026-06-19',g:'D',h:'EUA',          a:'Australia',          hf:'🇺🇸',af:'🇦🇺',et:'3:00 PM', v:'Lumen Field, Seattle'},
-  {d:'2026-06-19',g:'C',h:'Escocia',      a:'Marruecos',          hf:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',af:'🇲🇦',et:'6:00 PM', v:'Gillette, Foxborough'},
-  {d:'2026-06-19',g:'C',h:'Brasil',       a:'Haití',              hf:'🇧🇷',af:'🇭🇹',et:'8:30 PM', v:'Lincoln, Filadelfia'},
-  {d:'2026-06-19',g:'D',h:'Turquía',      a:'Paraguay',           hf:'🇹🇷',af:'🇵🇾',et:'11:00 PM',v:"Levi's, Santa Clara"},
-  // Jun 20
-  {d:'2026-06-20',g:'F',h:'Países Bajos', a:'Suecia',             hf:'🇳🇱',af:'🇸🇪',et:'1:00 PM', v:'NRG, Houston'},
-  {d:'2026-06-20',g:'E',h:'Alemania',     a:'Costa de Marfil',    hf:'🇩🇪',af:'🇨🇮',et:'4:00 PM', v:'BMO Field, Toronto'},
-  {d:'2026-06-20',g:'E',h:'Ecuador',      a:'Curazao',            hf:'🇪🇨',af:'🇨🇼',et:'8:00 PM', v:'Arrowhead, Kansas City'},
-  // Jun 21
-  {d:'2026-06-21',g:'F',h:'Túnez',        a:'Japón',              hf:'🇹🇳',af:'🇯🇵',et:'12:00 AM',v:'BBVA, Monterrey'},
-  {d:'2026-06-21',g:'H',h:'España',       a:'Arabia Saudita',     hf:'🇪🇸',af:'🇸🇦',et:'12:00 PM',v:'Mercedes-Benz, Atlanta'},
-  {d:'2026-06-21',g:'G',h:'Bélgica',      a:'Irán',               hf:'🇧🇪',af:'🇮🇷',et:'3:00 PM', v:'SoFi, Inglewood'},
-  {d:'2026-06-21',g:'H',h:'Uruguay',      a:'Cabo Verde',         hf:'🇺🇾',af:'🇨🇻',et:'6:00 PM', v:'Hard Rock, Miami'},
+  // Jun 11 — Jueves
+  {d:'2026-06-11',g:'A',h:'México',        a:'Sudáfrica',          hf:'🇲🇽',af:'🇿🇦',et:'3:00 PM', v:'Azteca, CDMX',          score:{h:2,a:0}},
+  {d:'2026-06-11',g:'A',h:'Corea del Sur', a:'Chequia',            hf:'🇰🇷',af:'🇨🇿',et:'10:00 PM',v:'Akron, Zapopan',         score:{h:3,a:1}},
+  // Jun 12 — Viernes
+  {d:'2026-06-12',g:'B',h:'Canadá',        a:'Bosnia-Herzegovina', hf:'🇨🇦',af:'🇧🇦',et:'3:00 PM', v:'BMO Field, Toronto',     score:{h:1,a:1}},
+  {d:'2026-06-12',g:'D',h:'EUA',           a:'Paraguay',           hf:'🇺🇸',af:'🇵🇾',et:'6:00 PM', v:'SoFi, Inglewood',        score:{h:4,a:1}},
+  // Jun 13 — Sábado (4 partidos)
+  {d:'2026-06-13',g:'B',h:'Qatar',         a:'Suiza',              hf:'🇶🇦',af:'🇨🇭',et:'12:00 PM',v:"Levi's, Santa Clara",    score:{h:1,a:1}},
+  {d:'2026-06-13',g:'C',h:'Brasil',        a:'Marruecos',          hf:'🇧🇷',af:'🇲🇦',et:'6:00 PM', v:'MetLife, NJ'},
+  {d:'2026-06-13',g:'C',h:'Haití',         a:'Escocia',            hf:'🇭🇹',af:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',et:'9:00 PM', v:'Gillette, Foxborough'},
+  {d:'2026-06-13',g:'D',h:'Australia',     a:'Turquía',            hf:'🇦🇺',af:'🇹🇷',et:'12:00 AM',v:'BC Place, Vancouver'},
+  // Jun 14 — Domingo
+  {d:'2026-06-14',g:'E',h:'Alemania',      a:'Curazao',            hf:'🇩🇪',af:'🇨🇼',et:'1:00 PM', v:'NRG, Houston'},
+  {d:'2026-06-14',g:'F',h:'Países Bajos',  a:'Japón',              hf:'🇳🇱',af:'🇯🇵',et:'4:00 PM', v:'AT&T, Arlington'},
+  {d:'2026-06-14',g:'E',h:'Costa de Marfil',a:'Ecuador',           hf:'🇨🇮',af:'🇪🇨',et:'7:00 PM', v:'Lincoln, Filadelfia'},
+  {d:'2026-06-14',g:'F',h:'Suecia',        a:'Túnez',              hf:'🇸🇪',af:'🇹🇳',et:'10:00 PM',v:'BBVA, Monterrey'},
+  // Jun 15 — Lunes
+  {d:'2026-06-15',g:'H',h:'España',        a:'Cabo Verde',         hf:'🇪🇸',af:'🇨🇻',et:'12:00 PM',v:'Mercedes-Benz, Atlanta'},
+  {d:'2026-06-15',g:'G',h:'Bélgica',       a:'Egipto',             hf:'🇧🇪',af:'🇪🇬',et:'3:00 PM', v:'Lumen Field, Seattle'},
+  {d:'2026-06-15',g:'H',h:'Arabia Saudita',a:'Uruguay',            hf:'🇸🇦',af:'🇺🇾',et:'6:00 PM', v:'Hard Rock, Miami'},
+  {d:'2026-06-15',g:'G',h:'Irán',          a:'Nueva Zelanda',      hf:'🇮🇷',af:'🇳🇿',et:'9:00 PM', v:'SoFi, Inglewood'},
+  // Jun 16 — Martes
+  {d:'2026-06-16',g:'I',h:'Francia',       a:'Senegal',            hf:'🇫🇷',af:'🇸🇳',et:'3:00 PM', v:'MetLife, NJ'},
+  {d:'2026-06-16',g:'I',h:'Irak',          a:'Noruega',            hf:'🇮🇶',af:'🇳🇴',et:'6:00 PM', v:'Gillette, Foxborough'},
+  {d:'2026-06-16',g:'J',h:'Argentina',     a:'Argelia',            hf:'🇦🇷',af:'🇩🇿',et:'9:00 PM', v:'Arrowhead, Kansas City'},
+  {d:'2026-06-16',g:'J',h:'Austria',       a:'Jordania',           hf:'🇦🇹',af:'🇯🇴',et:'12:00 AM',v:"Levi's, Santa Clara"},
+  // Jun 17 — Miércoles
+  {d:'2026-06-17',g:'K',h:'Portugal',      a:'Rep. Dem. Congo',    hf:'🇵🇹',af:'🇨🇩',et:'1:00 PM', v:'NRG, Houston'},
+  {d:'2026-06-17',g:'L',h:'Inglaterra',    a:'Croacia',            hf:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',af:'🇭🇷',et:'4:00 PM', v:'AT&T, Arlington'},
+  {d:'2026-06-17',g:'L',h:'Ghana',         a:'Panamá',             hf:'🇬🇭',af:'🇵🇦',et:'7:00 PM', v:'BMO Field, Toronto'},
+  {d:'2026-06-17',g:'K',h:'Uzbekistán',    a:'Colombia',           hf:'🇺🇿',af:'🇨🇴',et:'10:00 PM',v:'Azteca, CDMX'},
+  // Jun 18 — Jueves
+  {d:'2026-06-18',g:'A',h:'Chequia',       a:'Sudáfrica',          hf:'🇨🇿',af:'🇿🇦',et:'12:00 PM',v:'Mercedes-Benz, Atlanta'},
+  {d:'2026-06-18',g:'B',h:'Suiza',         a:'Bosnia-Herzegovina', hf:'🇨🇭',af:'🇧🇦',et:'3:00 PM', v:'SoFi, Inglewood'},
+  {d:'2026-06-18',g:'B',h:'Canadá',        a:'Qatar',              hf:'🇨🇦',af:'🇶🇦',et:'6:00 PM', v:'BC Place, Vancouver'},
+  {d:'2026-06-18',g:'A',h:'México',        a:'Corea del Sur',      hf:'🇲🇽',af:'🇰🇷',et:'9:00 PM', v:'Akron, Zapopan'},
+  // Jun 19 — Viernes
+  {d:'2026-06-19',g:'D',h:'EUA',           a:'Australia',          hf:'🇺🇸',af:'🇦🇺',et:'3:00 PM', v:'Lumen Field, Seattle'},
+  {d:'2026-06-19',g:'C',h:'Escocia',       a:'Marruecos',          hf:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',af:'🇲🇦',et:'6:00 PM', v:'Gillette, Foxborough'},
+  {d:'2026-06-19',g:'C',h:'Brasil',        a:'Haití',              hf:'🇧🇷',af:'🇭🇹',et:'9:00 PM', v:'Lincoln, Filadelfia'},
+  {d:'2026-06-19',g:'D',h:'Turquía',       a:'Paraguay',           hf:'🇹🇷',af:'🇵🇾',et:'11:00 PM',v:"Levi's, Santa Clara"},
+  // Jun 20 — Sábado
+  {d:'2026-06-20',g:'F',h:'Países Bajos',  a:'Suecia',             hf:'🇳🇱',af:'🇸🇪',et:'1:00 PM', v:'NRG, Houston'},
+  {d:'2026-06-20',g:'E',h:'Alemania',      a:'Costa de Marfil',    hf:'🇩🇪',af:'🇨🇮',et:'4:00 PM', v:'BMO Field, Toronto'},
+  {d:'2026-06-20',g:'E',h:'Ecuador',       a:'Curazao',            hf:'🇪🇨',af:'🇨🇼',et:'8:00 PM', v:'Arrowhead, Kansas City'},
+  {d:'2026-06-20',g:'F',h:'Túnez',         a:'Japón',              hf:'🇹🇳',af:'🇯🇵',et:'12:00 AM',v:'BBVA, Monterrey'},
+  // Jun 21 — Domingo
+  {d:'2026-06-21',g:'H',h:'España',        a:'Arabia Saudita',     hf:'🇪🇸',af:'🇸🇦',et:'12:00 PM',v:'Mercedes-Benz, Atlanta'},
+  {d:'2026-06-21',g:'G',h:'Bélgica',       a:'Irán',               hf:'🇧🇪',af:'🇮🇷',et:'3:00 PM', v:'SoFi, Inglewood'},
+  {d:'2026-06-21',g:'H',h:'Uruguay',       a:'Cabo Verde',         hf:'🇺🇾',af:'🇨🇻',et:'6:00 PM', v:'Hard Rock, Miami'},
   {d:'2026-06-21',g:'G',h:'Nueva Zelanda',a:'Egipto',             hf:'🇳🇿',af:'🇪🇬',et:'9:00 PM', v:'BC Place, Vancouver'},
   // Jun 22
   {d:'2026-06-22',g:'J',h:'Argentina',    a:'Austria',            hf:'🇦🇷',af:'🇦🇹',et:'1:00 PM', v:'AT&T, Arlington'},
@@ -1484,7 +1484,7 @@ function renderMatches() {
 // El proxy está en Apps Script (mundial2026_visitors.gs)
 // que llama a football-data.org server-side sin problema de CORS.
 // Solo necesitas que WEBAPP_URL esté configurada abajo.
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxiW9uYqaO2Xgl7c9bzR56D3gKHlaEMyBeWg1Vud9mLjMGXn5YGa4gEZbwNp2BUW5F7VA/exec';
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz0LS18Gxy5qkxjwcttsqsKU7zmpiWnRQH7SGzwDmwJJ5Ftx4eq39AZZm1rkmhSNUwT4A/exec';
 
 let liveScores = {};   // key: "YYYY-MM-DD|Home|Away"
 let apiStatus  = 'off'; // 'off' | 'live' | 'err'
