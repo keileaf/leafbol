@@ -666,6 +666,46 @@ main { padding: 14px 12px; max-width: 680px; margin: 0 auto; }
 .std-note span { display: flex; align-items: center; gap: 4px; }
 .std-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 
+/* ── MATCH DETAILS (goles + tarjetas) ───────── */
+.match-details {
+  padding: 0 12px 10px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border);
+  margin-top: 2px;
+  padding-top: 8px;
+}
+.match-detail-col {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.match-detail-col.away { align-items: flex-end; text-align: right; }
+.detail-event {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  color: var(--muted);
+  line-height: 1.3;
+}
+.detail-event.away { flex-direction: row-reverse; }
+.detail-min {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--muted);
+  min-width: 28px;
+  flex-shrink: 0;
+}
+.detail-player { color: var(--text); font-weight: 500; }
+.detail-og { color: var(--muted); font-style: italic; }
+.icon-goal  { font-size: 0.75rem; flex-shrink: 0; }
+.icon-yellow { width: 8px; height: 11px; background: #f0c040; border-radius: 1px; flex-shrink: 0; display: inline-block; }
+.icon-red    { width: 8px; height: 11px; background: var(--red); border-radius: 1px; flex-shrink: 0; display: inline-block; }
+
 /* ── FOOTER ──────────────────────────────────── */
 footer {
   text-align: center;
@@ -992,9 +1032,9 @@ const RAW = [
   {d:'2026-06-12',g:'D',h:'EUA',           a:'Paraguay',           hf:'🇺🇸',af:'🇵🇾',et:'6:00 PM', v:'SoFi, Inglewood',        score:{h:4,a:1}},
   // Jun 13 — Sábado (4 partidos)
   {d:'2026-06-13',g:'B',h:'Qatar',         a:'Suiza',              hf:'🇶🇦',af:'🇨🇭',et:'12:00 PM',v:"Levi's, Santa Clara",    score:{h:1,a:1}},
-  {d:'2026-06-13',g:'C',h:'Brasil',        a:'Marruecos',          hf:'🇧🇷',af:'🇲🇦',et:'6:00 PM', v:'MetLife, NJ'},
-  {d:'2026-06-13',g:'C',h:'Haití',         a:'Escocia',            hf:'🇭🇹',af:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',et:'9:00 PM', v:'Gillette, Foxborough'},
-  {d:'2026-06-13',g:'D',h:'Australia',     a:'Turquía',            hf:'🇦🇺',af:'🇹🇷',et:'12:00 AM',v:'BC Place, Vancouver'},
+  {d:'2026-06-13',g:'C',h:'Brasil',        a:'Marruecos',          hf:'🇧🇷',af:'🇲🇦',et:'6:00 PM', v:'MetLife, NJ',           score:{h:1,a:1}},
+  {d:'2026-06-13',g:'C',h:'Haití',         a:'Escocia',            hf:'🇭🇹',af:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',et:'9:00 PM', v:'Gillette, Foxborough',  score:{h:0,a:1}},
+  {d:'2026-06-13',g:'D',h:'Australia',     a:'Turquía',            hf:'🇦🇺',af:'🇹🇷',et:'12:00 AM',v:'BC Place, Vancouver',   score:{h:2,a:0}},
   // Jun 14 — Domingo
   {d:'2026-06-14',g:'E',h:'Alemania',      a:'Curazao',            hf:'🇩🇪',af:'🇨🇼',et:'1:00 PM', v:'NRG, Houston'},
   {d:'2026-06-14',g:'F',h:'Países Bajos',  a:'Japón',              hf:'🇳🇱',af:'🇯🇵',et:'4:00 PM', v:'AT&T, Arlington'},
@@ -1625,6 +1665,25 @@ function renderMatches() {
                 <div class="match-vs">vs</div>`;
     }
 
+    // Goles y tarjetas desde liveScores
+    const allGoals   = liveScore ? (liveScore.goals || []) : [];
+    const allCards   = liveScore ? (liveScore.cards || []) : [];
+    let detailsHtml  = '';
+    if (allGoals.length || allCards.length) {
+      const hGoals = allGoals.filter(g => normalizeTeamName(g.team)===m.h||g.team===m.h);
+      const aGoals = allGoals.filter(g => normalizeTeamName(g.team)===m.a||g.team===m.a);
+      const hCards = allCards.filter(c => normalizeTeamName(c.team)===m.h||c.team===m.h);
+      const aCards = allCards.filter(c => normalizeTeamName(c.team)===m.a||c.team===m.a);
+      const rg  = g => `<div class="detail-event"><span class="icon-goal">⚽</span><span class="detail-player">${g.player||''}${g.og?' <i>(PP)</i>':''}</span><span class="detail-min">${g.min?g.min+"'":''}</span></div>`;
+      const rga = g => `<div class="detail-event away"><span class="detail-min">${g.min?g.min+"'":''}</span><span class="detail-player">${g.player||''}${g.og?' <i>(PP)</i>':''}</span><span class="icon-goal">⚽</span></div>`;
+      const rc  = c => `<div class="detail-event"><span class="icon-${c.type}"></span><span class="detail-player">${c.player||''}</span><span class="detail-min">${c.min?c.min+"'":''}</span></div>`;
+      const rca = c => `<div class="detail-event away"><span class="detail-min">${c.min?c.min+"'":''}</span><span class="detail-player">${c.player||''}</span><span class="icon-${c.type}"></span></div>`;
+      detailsHtml = `<div class="match-details">
+        <div class="match-detail-col">${hGoals.map(rg).join('')}${hCards.map(rc).join('')}</div>
+        <div class="match-detail-col away">${aGoals.map(rga).join('')}${aCards.map(rca).join('')}</div>
+      </div>`;
+    }
+
     html += `<div class="${cardClass}">
       <div class="match-meta">
         <span class="${badgeClass(m)}">${sl}</span>
@@ -1642,6 +1701,7 @@ function renderMatches() {
           <div class="team-name">${m.a}</div>
         </div>
       </div>
+      ${detailsHtml}
     </div>`;
   });
 
@@ -1652,7 +1712,7 @@ function renderMatches() {
 // El proxy está en Apps Script (mundial2026_visitors.gs)
 // que llama a football-data.org server-side sin problema de CORS.
 // Solo necesitas que WEBAPP_URL esté configurada abajo.
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzut_CA0hRD_BwY5OhYpJWJP_xV5W4-GdCwg101KcCf-mpIHtkhmHrP-PpDIlNCdUqarg/exec';
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzPKjl1j7PEKzbGtbr75QWprZbViLDLjQCPGJVkpunmOI1VrTsmACHwiIze80r7h_bSFg/exec';
 
 let liveScores = {};   // key: "YYYY-MM-DD|Home|Away"
 let apiStatus  = 'off'; // 'off' | 'live' | 'err'
@@ -1666,13 +1726,17 @@ async function fetchLiveScores() {
 
     liveScores = {};
 
-    // 1. Históricos guardados en Sheets (resultados permanentes)
+    // 1. Históricos guardados en Sheets (con goles y tarjetas)
     (data.saved || []).forEach(m => {
       const match = findMatch(m.home, m.away);
       if (!match) return;
       const key = `${match.d}|${match.h}|${match.a}`;
-      if (!match.score) { // no sobreescribir scores hardcodeados
-        liveScores[key] = { h: m.homeScore, a: m.awayScore, state: 'post', detail: 'FT' };
+      if (!match.score) {
+        liveScores[key] = {
+          h: m.homeScore, a: m.awayScore,
+          state: 'post', detail: 'FT',
+          goals: m.goals || [], cards: m.cards || []
+        };
       }
     });
 
@@ -1682,7 +1746,11 @@ async function fetchLiveScores() {
       const match = findMatch(m.home, m.away);
       if (!match) { console.log('ESPN no encontrado:', m.home, 'vs', m.away); return; }
       const key = `${match.d}|${match.h}|${match.a}`;
-      liveScores[key] = { h: m.homeScore, a: m.awayScore, state: m.state, detail: m.detail };
+      liveScores[key] = {
+        h: m.homeScore, a: m.awayScore,
+        state: m.state, detail: m.detail,
+        goals: m.goals || [], cards: m.cards || []
+      };
       console.log('✅', match.h, m.homeScore, '-', m.awayScore, match.a, '|', m.detail);
     });
 
@@ -1910,18 +1978,32 @@ function selectGroup(g) {
   renderStandings(g);
 }
 
+// Orden de sorteo FIFA como desempate final (cuando todo lo demás está igualado)
+// Basado en el orden oficial del sorteo de la Copa Mundial 2026
+const FIFA_DRAW_ORDER = {
+  'A': ['México','Corea del Sur','Chequia','Sudáfrica'],
+  'B': ['Suiza','Canadá','Qatar','Bosnia-Herzegovina'],
+  'C': ['Brasil','Marruecos','Escocia','Haití'],
+  'D': ['EUA','Australia','Turquía','Paraguay'],
+  'E': ['Alemania','Costa de Marfil','Ecuador','Curazao'],
+  'F': ['Países Bajos','Japón','Suecia','Túnez'],
+  'G': ['Bélgica','Irán','Egipto','Nueva Zelanda'],
+  'H': ['España','Uruguay','Arabia Saudita','Cabo Verde'],
+  'I': ['Francia','Noruega','Senegal','Irak'],
+  'J': ['Argentina','Austria','Argelia','Jordania'],
+  'K': ['Portugal','Colombia','Uzbekistán','Rep. Dem. Congo'],
+  'L': ['Inglaterra','Panamá','Croacia','Ghana']
+};
+
 function calcStandings(group) {
-  // Obtener equipos del grupo
   const groupMatches = MATCHES.filter(m => m.g === group);
   const teams = [...new Set(groupMatches.flatMap(m => [m.h, m.a]))];
 
-  // Inicializar stats
   const stats = {};
   teams.forEach(t => {
     stats[t] = { team: t, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0, dif: 0, pts: 0 };
   });
 
-  // Calcular con scores hardcodeados o de liveScores
   groupMatches.forEach(m => {
     const key = `${m.d}|${m.h}|${m.a}`;
     const ls  = liveScores[key];
@@ -1933,7 +2015,7 @@ function calcStandings(group) {
       sh = m.score.h; sa = m.score.a;
     }
 
-    if (sh === null || sa === null) return; // no jugado aún
+    if (sh === null || sa === null) return;
 
     const home = stats[m.h];
     const away = stats[m.a];
@@ -1942,23 +2024,28 @@ function calcStandings(group) {
     away.gf += sa; away.gc += sh;
 
     if (sh > sa) {
-      home.g++; home.pts += 3;
-      away.p++;
+      home.g++; home.pts += 3; away.p++;
     } else if (sh === sa) {
-      home.e++; home.pts++;
-      away.e++; away.pts++;
+      home.e++; home.pts++; away.e++; away.pts++;
     } else {
-      away.g++; away.pts += 3;
-      home.p++;
+      away.g++; away.pts += 3; home.p++;
     }
     home.dif = home.gf - home.gc;
     away.dif = away.gf - away.gc;
   });
 
-  // Ordenar: pts → dif → gf
-  return Object.values(stats).sort((a, b) =>
-    b.pts - a.pts || b.dif - a.dif || b.gf - a.gf
-  );
+  const drawOrder = FIFA_DRAW_ORDER[group] || [];
+
+  return Object.values(stats).sort((a, b) => {
+    // 1. Puntos
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    // 2. Diferencia de goles
+    if (b.dif !== a.dif) return b.dif - a.dif;
+    // 3. Goles a favor
+    if (b.gf !== a.gf) return b.gf - a.gf;
+    // 4. Orden del sorteo FIFA (criterio final)
+    return drawOrder.indexOf(a.team) - drawOrder.indexOf(b.team);
+  });
 }
 
 function renderStandings(group) {
