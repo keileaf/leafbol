@@ -666,6 +666,136 @@ main { padding: 14px 12px; max-width: 680px; margin: 0 auto; }
 .std-note span { display: flex; align-items: center; gap: 4px; }
 .std-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 
+/* ── QUINIELA ────────────────────────────────── */
+.predict-section {
+  border-top: 1px solid var(--border);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.predict-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  font-weight: 700;
+}
+.predict-nickname-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.predict-nickname-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.predict-nickname-input::placeholder { color: var(--muted); }
+.predict-nickname-input:focus { border-color: var(--accent); }
+.predict-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.predict-team-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+  text-align: center;
+  line-height: 1.2;
+}
+.predict-score-input {
+  width: 42px;
+  height: 38px;
+  text-align: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--accent);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.predict-score-input:focus { border-color: var(--accent); }
+.predict-dash { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--muted); }
+.predict-btn {
+  width: 100%;
+  padding: 8px;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: #000;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.predict-btn:hover { opacity: 0.85; }
+.predict-btn:disabled { opacity: 0.4; cursor: default; }
+.predict-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.predict-voted { font-size: 0.75rem; color: var(--muted); }
+.predict-voted strong { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; color: var(--text); }
+.predict-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.predict-badge.exact   { background: #0d2a0d; color: var(--accent2); }
+.predict-badge.winner  { background: #1a1500; color: var(--accent); }
+.predict-badge.miss    { background: #1a0d0d; color: var(--red); }
+.predict-badge.pending { background: var(--surface2); color: var(--muted); }
+
+/* Barra de votos */
+.predict-votes-bar { display: flex; border-radius: 4px; overflow: hidden; height: 4px; gap: 1px; }
+.predict-votes-bar .bar-home { background: var(--blue); }
+.predict-votes-bar .bar-draw { background: var(--muted); }
+.predict-votes-bar .bar-away { background: var(--red); }
+.predict-votes-info { display: flex; justify-content: space-between; font-size: 0.6rem; color: var(--muted); }
+
+/* Sección de ganadores */
+.predict-winners {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.predict-winners-row {
+  font-size: 0.72rem;
+  color: var(--text);
+  line-height: 1.4;
+}
+.predict-winners-row .w-names {
+  font-weight: 600;
+  color: var(--accent2);
+}
+.predict-winners-row.exact .w-names { color: var(--accent2); }
+.predict-winners-row.winner .w-names { color: var(--accent); }
+.predict-winners-row.nobody { color: var(--muted); font-style: italic; }
+
 /* ── MATCH DETAILS (goles + tarjetas) ───────── */
 .match-details {
   padding: 0 12px 10px;
@@ -1397,6 +1527,7 @@ function selectDate(d) {
   currentDate = d;
   renderDateBar();
   renderMatches();
+  loadPredictionsForDay();
 }
 
 // ─── RELOJ ───────────────────────────────────────────────────
@@ -1684,6 +1815,10 @@ function renderMatches() {
       </div>`;
     }
 
+    // Sección de quiniela
+    const matchKey   = `${m.d}|${m.h}|${m.a}`;
+    const predictHtml = buildPredictSection(m, matchKey, finished || (liveScore && liveScore.state === 'post'));
+
     html += `<div class="${cardClass}">
       <div class="match-meta">
         <span class="${badgeClass(m)}">${sl}</span>
@@ -1702,6 +1837,7 @@ function renderMatches() {
         </div>
       </div>
       ${detailsHtml}
+      ${predictHtml}
     </div>`;
   });
 
@@ -1712,7 +1848,7 @@ function renderMatches() {
 // El proxy está en Apps Script (mundial2026_visitors.gs)
 // que llama a football-data.org server-side sin problema de CORS.
 // Solo necesitas que WEBAPP_URL esté configurada abajo.
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzPKjl1j7PEKzbGtbr75QWprZbViLDLjQCPGJVkpunmOI1VrTsmACHwiIze80r7h_bSFg/exec';
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbx9cjLVCOe8bck61WA79Ufh35fFWFwDqzkN9Y0Hhh-4yaxCL2xgEHiwLIRu0JiiP4Up-g/exec';
 
 let liveScores = {};   // key: "YYYY-MM-DD|Home|Away"
 let apiStatus  = 'off'; // 'off' | 'live' | 'err'
@@ -2087,6 +2223,164 @@ function renderStandings(group) {
   wrap.innerHTML = html;
 }
 
+// ─── QUINIELA / PREDICCIONES ─────────────────────────────────
+const myPredictions = {}; // cache local: matchKey → {homeGoal, awayGoal, result, points}
+const matchVotes    = {}; // cache: matchKey → {total, homeWin, draw, awayWin}
+
+// Cargar predicción previa del usuario para un partido
+async function loadMyPrediction(matchKey) {
+  if (!myIP) return null;
+  if (myPredictions[matchKey] !== undefined) return myPredictions[matchKey];
+  try {
+    const res  = await fetch(`${WEBAPP_URL}?action=myprediction&match=${encodeURIComponent(matchKey)}&ip=${encodeURIComponent(myIP)}`);
+    const data = await res.json();
+    myPredictions[matchKey] = data.found ? data : null;
+    return myPredictions[matchKey];
+  } catch(_) { return null; }
+}
+
+// Cargar votos totales de un partido
+async function loadMatchVotes(matchKey) {
+  if (matchVotes[matchKey]) return matchVotes[matchKey];
+  try {
+    const res  = await fetch(`${WEBAPP_URL}?action=predictions&match=${encodeURIComponent(matchKey)}`);
+    const data = await res.json();
+    matchVotes[matchKey] = data;
+    return data;
+  } catch(_) { return null; }
+}
+
+// Enviar predicción
+async function submitPrediction(matchKey, home, away, homeGoal, awayGoal, btnEl) {
+  if (!myIP) { showToast('⚠️ Espera un momento, cargando tu IP...'); return; }
+  btnEl.disabled = true;
+  btnEl.textContent = 'Guardando...';
+  try {
+    const res = await fetch(WEBAPP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'predict', ip: myIP,
+        matchKey, home, away,
+        homeGoal: Number(homeGoal),
+        awayGoal: Number(awayGoal)
+      })
+    });
+    const data = await res.json();
+    if (data.alreadyVoted) {
+      showToast('⚠️ Ya votaste en este partido');
+      btnEl.disabled = false;
+      btnEl.textContent = 'Votar';
+      return;
+    }
+    if (data.ok) {
+      myPredictions[matchKey] = { found: true, homeGoal: Number(homeGoal), awayGoal: Number(awayGoal), result: null, points: 0 };
+      delete matchVotes[matchKey]; // invalidar cache de votos
+      showToast('✅ ¡Predicción guardada!');
+      renderMatches(); // re-renderizar para mostrar "ya votaste"
+    } else {
+      showToast('❌ Error: ' + (data.error || 'intenta de nuevo'));
+      btnEl.disabled = false;
+      btnEl.textContent = 'Votar';
+    }
+  } catch(e) {
+    showToast('❌ Error de conexión');
+    btnEl.disabled = false;
+    btnEl.textContent = 'Votar';
+  }
+}
+
+// Generar HTML de la sección de quiniela para una card
+function buildPredictSection(m, matchKey, isFinished) {
+  const pred   = myPredictions[matchKey]; // puede ser null, undefined, o el objeto
+  const votes  = matchVotes[matchKey];
+  const closed = isFinished || isMatchStarted(m); // votación cerrada si ya empezó
+
+  let html = `<div class="predict-section">
+    <div class="predict-label">⚽ Quiniela</div>`;
+
+  // Si ya votó o el partido terminó → mostrar resultado
+  if (pred && pred.found) {
+    const badge = pred.result
+      ? `<span class="predict-badge ${pred.result}">${
+          pred.result==='exact'  ? '🎯 Exacto +3pts' :
+          pred.result==='winner' ? '✅ Ganador +1pt' : '❌ Fallaste'
+        }</span>`
+      : `<span class="predict-badge pending">⏳ Pendiente</span>`;
+
+    html += `<div class="predict-result">
+      <div class="predict-voted">Tu pronóstico: <strong>${pred.homeGoal}–${pred.awayGoal}</strong></div>
+      ${badge}
+    </div>`;
+  }
+  // Si no ha votado y el partido no ha empezado → mostrar formulario
+  else if (!closed && pred === null) {
+    html += `<div class="predict-inputs">
+      <span class="predict-team-name">${m.h}</span>
+      <input class="predict-score-input" type="number" min="0" max="20" value="0" id="ph_${matchKey.replace(/[|]/g,'_')}">
+      <span class="predict-dash">–</span>
+      <input class="predict-score-input" type="number" min="0" max="20" value="0" id="pa_${matchKey.replace(/[|]/g,'_')}">
+      <span class="predict-team-name">${m.a}</span>
+    </div>
+    <button class="predict-btn" onclick="(function(){
+      const k='${matchKey.replace(/'/g,"\\'")}';
+      const h=document.getElementById('ph_${matchKey.replace(/[|]/g,'_')}').value;
+      const a=document.getElementById('pa_${matchKey.replace(/[|]/g,'_')}').value;
+      submitPrediction(k,'${m.h.replace(/'/g,"\\'")}','${m.a.replace(/'/g,"\\'")}',h,a,this);
+    }).call(this)">Votar pronóstico</button>`;
+  }
+  // Partido ya empezó y no había votado
+  else if (closed && (!pred || !pred.found)) {
+    html += `<div class="predict-voted" style="color:var(--muted)">⛔ Votación cerrada</div>`;
+  }
+  // Cargando predicción del usuario
+  else {
+    html += `<div class="predict-voted" style="color:var(--muted)">Cargando...</div>`;
+  }
+
+  // Barra de votos globales (si hay datos)
+  if (votes && votes.total > 0) {
+    const t  = votes.total;
+    const hw = Math.round(votes.homeWin / t * 100);
+    const d  = Math.round(votes.draw    / t * 100);
+    const aw = 100 - hw - d;
+    html += `<div class="predict-votes-bar">
+      <div class="bar-home"  style="width:${hw}%"></div>
+      <div class="bar-draw"  style="width:${d}%"></div>
+      <div class="bar-away"  style="width:${aw}%"></div>
+    </div>
+    <div class="predict-votes-info">
+      <span>🏠 ${hw}%</span>
+      <span>${t} votos</span>
+      <span>${aw}% 🚌</span>
+    </div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+// El partido ya empezó si su hora UTC ya pasó
+function isMatchStarted(m) {
+  return Date.now() >= m._utc;
+}
+
+// Cargar predicciones del usuario para todos los partidos del día visible
+async function loadPredictionsForDay() {
+  if (!myIP) return;
+  const dayMatches = MATCHES.filter(m => m.d === currentDate);
+  for (const m of dayMatches) {
+    const key = `${m.d}|${m.h}|${m.a}`;
+    if (myPredictions[key] === undefined) {
+      await loadMyPrediction(key);
+    }
+    if (!matchVotes[key]) {
+      loadMatchVotes(key); // no await, carga en background
+    }
+  }
+  renderMatches();
+}
+
 // ─── INIT ────────────────────────────────────────────────────
 function init() {
   const today  = todayTijuana();
@@ -2115,6 +2409,9 @@ function init() {
 
   // Re-programar notificaciones cada hora
   setInterval(scheduleMatchNotifications, 3600000);
+
+  // Cargar predicciones del día (después de que myIP esté disponible)
+  setTimeout(loadPredictionsForDay, 2000);
 }
 
 init();
@@ -2185,6 +2482,8 @@ function addMarker(lat, lon, label, isMe) {
 }
 
 // ── Cargar visitantes desde Apps Script ─────────────
+let myIP = null; // IP real del visitante actual
+
 async function loadVisitors() {
   try {
     const res  = await fetch(WEBAPP_URL);
@@ -2196,14 +2495,12 @@ async function loadVisitors() {
 
     if (visitorMap) {
       visitors.forEach(v => {
-        const isMe = myLatLon &&
-          Math.abs(v.lat - myLatLon[0]) < 0.5 &&
-          Math.abs(v.lon - myLatLon[1]) < 0.5;
+        // Solo marcar como "tú" si la IP coincide exactamente
+        const isMe = myIP && (v.ip === myIP || v.ip === maskIPLocal(myIP));
         const label = `${v.city || ''}${v.city ? ', ' : ''}${v.country}`;
         addMarker(v.lat, v.lon, label, isMe);
       });
 
-      // Si hay mi ubicación, centrar ahí
       if (myLatLon) {
         visitorMap.setView(myLatLon, 5, { animate: true });
       } else if (visitors.length > 0) {
@@ -2217,6 +2514,13 @@ async function loadVisitors() {
   }
 }
 
+// Simular el masking que hace el Apps Script (X.X.*.*)
+function maskIPLocal(ip) {
+  const p = ip.split('.');
+  if (p.length === 4) return `${p[0]}.${p[1]}.*.*`;
+  return ip;
+}
+
 // ── Lista de visitantes ──────────────────────────────
 function renderVisitorList(visitors) {
   const list = document.getElementById('visitorList');
@@ -2225,19 +2529,20 @@ function renderVisitorList(visitors) {
     return;
   }
 
-  // Ordenar: más recientes primero
   const sorted = [...visitors].sort((a,b) => new Date(b.ts) - new Date(a.ts));
 
+  // Solo la visita más reciente del mismo IP masked se marca como "tú"
+  let markedMe = false;
+
   list.innerHTML = sorted.slice(0, 50).map(v => {
-    const code   = FLAG_CODES[v.country] || '';
-    const flag   = code
+    const code  = FLAG_CODES[v.country] || '';
+    const flag  = code
       ? `<img class="visitor-flag-img" src="https://flagcdn.com/20x15/${code}.png" alt="">`
       : '🌐';
-    const label  = [v.city, v.region, v.country].filter(Boolean).join(', ');
-    const ts     = v.ts ? timeAgo(new Date(v.ts)) : '';
-    const isMe   = myLatLon &&
-      Math.abs(v.lat - myLatLon[0]) < 0.5 &&
-      Math.abs(v.lon - myLatLon[1]) < 0.5;
+    const label = [v.city, v.region, v.country].filter(Boolean).join(', ');
+    const ts    = v.ts ? timeAgo(new Date(v.ts)) : '';
+    const isMe  = !markedMe && myIP && v.ip === maskIPLocal(myIP);
+    if (isMe) markedMe = true;
     return `<div class="visitor-row${isMe?' visitor-me':''}">
       ${flag}
       <span class="visitor-loc">${label}${isMe ? ' 📍 (tú)' : ''}</span>
@@ -2269,8 +2574,7 @@ async function trackVisitor() {
     if (!lat && !lon) throw new Error('Sin coordenadas');
 
     myLatLon = [lat, lon];
-
-    const badge = document.getElementById('myLocationBadge');
+    myIP = info.ip; // IP real para identificar "tú" en la lista
     const text  = document.getElementById('myLocationText');
     if (badge) badge.style.display = 'block';
     if (text)  text.textContent = `Tu ubicación: ${info.city}, ${info.country}`;
