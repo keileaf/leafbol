@@ -2275,7 +2275,7 @@ async function submitPrediction(matchKey, home, away, homeGoal, awayGoal, btnEl)
       return;
     }
     if (data.ok) {
-      myPredictions[matchKey] = { found: true, homeGoal: Number(homeGoal), awayGoal: Number(awayGoal), apodo: window.__pendingApodo || 'Anónimo', result: null, points: 0 };
+      myPredictions[matchKey] = { found: true, homeGoal: Number(homeGoal), awayGoal: Number(awayGoal), apodo: window.__pendingApodo, result: null, points: 0 };
       window.__pendingApodo = '';
       delete matchVotes[matchKey]; // invalidar cache de votos
       showToast('✅ ¡Predicción guardada!');
@@ -2319,7 +2319,7 @@ function buildPredictSection(m, matchKey, isFinished) {
   else if (!closed && pred === null) {
     const inputId = matchKey.replace(/[|]/g,'_');
     html += `<div class="predict-nickname-row">
-      <input class="predict-nickname-input" type="text" maxlength="20" placeholder="Tu apodo (opcional)" id="nick_${inputId}">
+      <input class="predict-nickname-input" type="text" maxlength="20" placeholder="Tu apodo (requerido)" id="nick_${inputId}" required>
     </div>
     <div class="predict-inputs">
       <span class="predict-team-name">${m.h}</span>
@@ -2332,7 +2332,14 @@ function buildPredictSection(m, matchKey, isFinished) {
       const k='${matchKey.replace(/'/g,"\\'")}';
       const h=document.getElementById('ph_${inputId}').value;
       const a=document.getElementById('pa_${inputId}').value;
-      const nick=document.getElementById('nick_${inputId}').value;
+      const nickEl=document.getElementById('nick_${inputId}');
+      const nick=nickEl.value.trim();
+      if (!nick) {
+        nickEl.style.borderColor = 'var(--red)';
+        nickEl.focus();
+        showToast('⚠️ Escribe un apodo para votar');
+        return;
+      }
       window.__pendingApodo = nick;
       submitPrediction(k,'${m.h.replace(/'/g,"\\'")}','${m.a.replace(/'/g,"\\'")}',h,a,this);
     }).call(this)">Votar pronóstico</button>`;
