@@ -2258,12 +2258,13 @@ async function submitPrediction(matchKey, home, away, homeGoal, awayGoal, btnEl)
   try {
     const res = await fetch(WEBAPP_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         action: 'predict', ip: myIP,
         matchKey, home, away,
         homeGoal: Number(homeGoal),
-        awayGoal: Number(awayGoal)
+        awayGoal: Number(awayGoal),
+        apodo: window.__pendingApodo || ''
       })
     });
     const data = await res.json();
@@ -2274,7 +2275,8 @@ async function submitPrediction(matchKey, home, away, homeGoal, awayGoal, btnEl)
       return;
     }
     if (data.ok) {
-      myPredictions[matchKey] = { found: true, homeGoal: Number(homeGoal), awayGoal: Number(awayGoal), result: null, points: 0 };
+      myPredictions[matchKey] = { found: true, homeGoal: Number(homeGoal), awayGoal: Number(awayGoal), apodo: window.__pendingApodo || 'Anónimo', result: null, points: 0 };
+      window.__pendingApodo = '';
       delete matchVotes[matchKey]; // invalidar cache de votos
       showToast('✅ ¡Predicción guardada!');
       renderMatches(); // re-renderizar para mostrar "ya votaste"
@@ -2315,17 +2317,23 @@ function buildPredictSection(m, matchKey, isFinished) {
   }
   // Si no ha votado y el partido no ha empezado → mostrar formulario
   else if (!closed && pred === null) {
-    html += `<div class="predict-inputs">
+    const inputId = matchKey.replace(/[|]/g,'_');
+    html += `<div class="predict-nickname-row">
+      <input class="predict-nickname-input" type="text" maxlength="20" placeholder="Tu apodo (opcional)" id="nick_${inputId}">
+    </div>
+    <div class="predict-inputs">
       <span class="predict-team-name">${m.h}</span>
-      <input class="predict-score-input" type="number" min="0" max="20" value="0" id="ph_${matchKey.replace(/[|]/g,'_')}">
+      <input class="predict-score-input" type="number" min="0" max="20" value="0" id="ph_${inputId}">
       <span class="predict-dash">–</span>
-      <input class="predict-score-input" type="number" min="0" max="20" value="0" id="pa_${matchKey.replace(/[|]/g,'_')}">
+      <input class="predict-score-input" type="number" min="0" max="20" value="0" id="pa_${inputId}">
       <span class="predict-team-name">${m.a}</span>
     </div>
     <button class="predict-btn" onclick="(function(){
       const k='${matchKey.replace(/'/g,"\\'")}';
-      const h=document.getElementById('ph_${matchKey.replace(/[|]/g,'_')}').value;
-      const a=document.getElementById('pa_${matchKey.replace(/[|]/g,'_')}').value;
+      const h=document.getElementById('ph_${inputId}').value;
+      const a=document.getElementById('pa_${inputId}').value;
+      const nick=document.getElementById('nick_${inputId}').value;
+      window.__pendingApodo = nick;
       submitPrediction(k,'${m.h.replace(/'/g,"\\'")}','${m.a.replace(/'/g,"\\'")}',h,a,this);
     }).call(this)">Votar pronóstico</button>`;
   }
@@ -2354,6 +2362,28 @@ function buildPredictSection(m, matchKey, isFinished) {
       <span>${t} votos</span>
       <span>${aw}% 🚌</span>
     </div>`;
+  }
+
+  // Resultados de la quiniela (solo cuando el partido terminó)
+  if (isFinished && votes && votes.total > 0) {
+    html += `<div class="predict-winners">`;
+    if (votes.exactWinners && votes.exactWinners.length > 0) {
+      html += `<div class="predict-winners-row exact">
+        <span>🎯 Acertaron el resultado exacto:</span>
+        <span class="w-names">${votes.exactWinners.join(', ')}</span>
+      </div>`;
+    }
+    if (votes.resultWinners && votes.resultWinners.length > 0) {
+      html += `<div class="predict-winners-row winner">
+        <span>✅ Acertaron el ganador:</span>
+        <span class="w-names">${votes.resultWinners.join(', ')}</span>
+      </div>`;
+    }
+    if ((!votes.exactWinners || votes.exactWinners.length === 0) &&
+        (!votes.resultWinners || votes.resultWinners.length === 0)) {
+      html += `<div class="predict-winners-row nobody">😅 Nadie acertó</div>`;
+    }
+    html += `</div>`;
   }
 
   html += `</div>`;
