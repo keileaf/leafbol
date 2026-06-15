@@ -1848,7 +1848,7 @@ function renderMatches() {
 // El proxy está en Apps Script (mundial2026_visitors.gs)
 // que llama a football-data.org server-side sin problema de CORS.
 // Solo necesitas que WEBAPP_URL esté configurada abajo.
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwta-KGvwXljzfB0SJdThW2ZKXVuPAtsaKDmiAbU6JuwZBDqukswpV96HR-LBVOcsSAPA/exec';
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyKbKuySM8_7RFfr5QLlzg-M5dvdN9tJ514mjGeXLs4kLne8IpbCKhlftaIXGlNrW_nNg/exec';
 
 let liveScores = {};   // key: "YYYY-MM-DD|Home|Away"
 let apiStatus  = 'off'; // 'off' | 'live' | 'err'
@@ -2270,6 +2270,12 @@ async function submitPrediction(matchKey, home, away, homeGoal, awayGoal, btnEl)
     const data = await res.json();
     if (data.alreadyVoted) {
       showToast('⚠️ Ya votaste en este partido');
+      btnEl.disabled = false;
+      btnEl.textContent = 'Votar';
+      return;
+    }
+    if (data.nicknameTaken) {
+      showToast('⚠️ Ese apodo ya está en uso para este partido, elige otro');
       btnEl.disabled = false;
       btnEl.textContent = 'Votar';
       return;
