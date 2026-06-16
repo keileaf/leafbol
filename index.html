@@ -773,6 +773,11 @@ main { padding: 14px 12px; max-width: 680px; margin: 0 auto; }
 .predict-votes-bar .bar-draw { background: var(--muted); }
 .predict-votes-bar .bar-away { background: var(--red); }
 .predict-votes-info { display: flex; justify-content: space-between; font-size: 0.6rem; color: var(--muted); }
+.predict-all-list { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+.predict-all-row { display: flex; align-items: center; gap: 6px; font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; background: rgba(255,255,255,0.03); }
+.pal-apodo { flex: 1; color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pal-score { color: var(--accent); font-weight: 700; min-width: 28px; text-align: center; }
+.pal-badge { font-size: 0.75rem; }
 
 /* Sección de ganadores */
 .predict-winners {
@@ -1179,7 +1184,7 @@ const RAW = [
   {d:'2026-06-16',g:'I',h:'Francia',       a:'Senegal',            hf:'🇫🇷',af:'🇸🇳',et:'3:00 PM', v:'MetLife, NJ'},
   {d:'2026-06-16',g:'I',h:'Irak',          a:'Noruega',            hf:'🇮🇶',af:'🇳🇴',et:'6:00 PM', v:'Gillette, Foxborough'},
   {d:'2026-06-16',g:'J',h:'Argentina',     a:'Argelia',            hf:'🇦🇷',af:'🇩🇿',et:'9:00 PM', v:'Arrowhead, Kansas City'},
-  {d:'2026-06-16',g:'J',h:'Austria',       a:'Jordania',           hf:'🇦🇹',af:'🇯🇴',et:'12:00 AM',v:"Levi's, Santa Clara"},
+  {d:'2026-06-16',g:'J',h:'Austria',       a:'Jordania',           hf:'🇦🇹',af:'🇯🇴',et:'9:00 PM', v:"Levi's, Santa Clara"},
   // Jun 17 — Miércoles
   {d:'2026-06-17',g:'K',h:'Portugal',      a:'Rep. Dem. Congo',    hf:'🇵🇹',af:'🇨🇩',et:'1:00 PM', v:'NRG, Houston'},
   {d:'2026-06-17',g:'L',h:'Inglaterra',    a:'Croacia',            hf:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',af:'🇭🇷',et:'4:00 PM', v:'AT&T, Arlington'},
@@ -2304,8 +2309,8 @@ function buildPredictSection(m, matchKey, isFinished) {
   const votes  = matchVotes[matchKey];
   const closed = isFinished || isMatchStarted(m); // votación cerrada si ya empezó
 
-  let html = `<div class="predict-section">              
-    <div class="predict-label">⚽ Atinale al marcador | la votacion se cierra al inicio del partido</div>`;
+  let html = `<div class="predict-section">
+    <div class="predict-label">⚽ Quiniela</div>`;
 
   // Si ya votó o el partido terminó → mostrar resultado
   if (pred && pred.found) {
@@ -2359,8 +2364,8 @@ function buildPredictSection(m, matchKey, isFinished) {
     html += `<div class="predict-voted" style="color:var(--muted)">Cargando...</div>`;
   }
 
-  // Barra de votos globales (si hay datos)
-  if (votes && votes.total > 0) {
+  // Barra de votos globales — visible cuando el partido ya empezó o hay datos
+  if (votes && votes.total > 0 && closed) {
     const t  = votes.total;
     const hw = Math.round(votes.homeWin / t * 100);
     const d  = Math.round(votes.draw    / t * 100);
@@ -2375,6 +2380,20 @@ function buildPredictSection(m, matchKey, isFinished) {
       <span>${t} votos</span>
       <span>${aw}% 🚌</span>
     </div>`;
+
+    // Lista de pronósticos individuales (visible en juego y al terminar)
+    html += `<div class="predict-all-list">`;
+    votes.predictions.forEach(p => {
+      const badge = p.result === 'exact'  ? '🎯' :
+                    p.result === 'winner' ? '✅' :
+                    p.result === 'miss'   ? '❌' : '';
+      html += `<div class="predict-all-row">
+        <span class="pal-apodo">${p.apodo}</span>
+        <span class="pal-score">${p.homeGoal}–${p.awayGoal}</span>
+        ${badge ? `<span class="pal-badge">${badge}</span>` : ''}
+      </div>`;
+    });
+    html += `</div>`;
   }
 
   // Resultados de la quiniela (solo cuando el partido terminó)
