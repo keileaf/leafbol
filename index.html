@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -2314,7 +2316,7 @@ function buildPredictSection(m, matchKey, isFinished) {
   const votes  = matchVotes[matchKey];
   const closed = isFinished || isMatchStarted(m); // votación cerrada si ya empezó
 
-  let html = `<div class="predict-section">              
+  let html = `<div class="predict-section">
     <div class="predict-label">⚽ Adivina el marcador | la votacion se cierra al comienzo del partido</div>`;
 
   // Si ya votó o el partido terminó → mostrar resultado
@@ -2568,11 +2570,14 @@ async function loadVisitors() {
         addMarker(v.lat, v.lon, label, isMe);
       });
 
-      if (myLatLon) {
-        visitorMap.setView(myLatLon, 5, { animate: true });
-      } else if (visitors.length > 0) {
-        const bounds = visitors.map(v => [v.lat, v.lon]);
-        visitorMap.fitBounds(bounds, { padding: [30, 30] });
+      // Siempre ajustar el mapa para mostrar todos los puntos
+      const allPoints = visitors.map(v => [v.lat, v.lon]);
+      if (myLatLon) allPoints.push(myLatLon);
+
+      if (allPoints.length === 1) {
+        visitorMap.setView(allPoints[0], 5, { animate: true });
+      } else if (allPoints.length > 1) {
+        visitorMap.fitBounds(allPoints, { padding: [40, 40], maxZoom: 10, animate: true });
       }
     }
   } catch(e) {
