@@ -2314,8 +2314,8 @@ function buildPredictSection(m, matchKey, isFinished) {
   const votes  = matchVotes[matchKey];
   const closed = isFinished || isMatchStarted(m); // votación cerrada si ya empezó
 
-  let html = `<div class="predict-section">
-    <div class="predict-label">⚽ Quiniela</div>`;
+  let html = `<div class="predict-section">              
+    <div class="predict-label">⚽ Adivina el marcador | la votacion se cierra al comienzo del partido</div>`;
 
   // Si ya votó o el partido terminó → mostrar resultado
   if (pred && pred.found) {
