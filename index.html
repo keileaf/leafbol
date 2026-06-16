@@ -1184,7 +1184,7 @@ const RAW = [
   {d:'2026-06-16',g:'I',h:'Francia',       a:'Senegal',            hf:'🇫🇷',af:'🇸🇳',et:'3:00 PM', v:'MetLife, NJ'},
   {d:'2026-06-16',g:'I',h:'Irak',          a:'Noruega',            hf:'🇮🇶',af:'🇳🇴',et:'6:00 PM', v:'Gillette, Foxborough'},
   {d:'2026-06-16',g:'J',h:'Argentina',     a:'Argelia',            hf:'🇦🇷',af:'🇩🇿',et:'9:00 PM', v:'Arrowhead, Kansas City'},
-  {d:'2026-06-16',g:'J',h:'Austria',       a:'Jordania',           hf:'🇦🇹',af:'🇯🇴',et:'9:00 PM', v:"Levi's, Santa Clara"},
+  {d:'2026-06-17',g:'J',h:'Austria',       a:'Jordania',           hf:'🇦🇹',af:'🇯🇴',et:'12:00 AM',v:"Levi's, Santa Clara"},
   // Jun 17 — Miércoles
   {d:'2026-06-17',g:'K',h:'Portugal',      a:'Rep. Dem. Congo',    hf:'🇵🇹',af:'🇨🇩',et:'1:00 PM', v:'NRG, Houston'},
   {d:'2026-06-17',g:'L',h:'Inglaterra',    a:'Croacia',            hf:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',af:'🇭🇷',et:'4:00 PM', v:'AT&T, Arlington'},
@@ -1289,11 +1289,16 @@ const RAW = [
 ];
 
 // Calcular hora local del visitante para cada partido
-const MATCHES = RAW.map(m => ({
-  ...m,
-  pdt: formatLocalTime(etToDate(m.d, m.et)),         // hora en zona del visitor
-  _utc: etToDate(m.d, m.et).getTime()                // ms UTC para comparaciones
-}));
+const MATCHES = RAW.map(m => {
+  const utcDate = etToDate(m.d, m.et);
+  return {
+    ...m,
+    pdt: formatLocalTime(utcDate),
+    _utc: utcDate.getTime(),
+    // Fecha local del usuario (puede diferir de m.d si está en otra zona)
+    localDate: utcDate.toLocaleDateString('en-CA', { timeZone: USER_TZ })
+  };
+});
 
 // ── ESTADO: determinar si un partido está terminado ──────────
 // Un partido se considera "terminado" si su hora PDT ya pasó hace 2h+ 
@@ -1314,7 +1319,7 @@ function isUpcoming(m) {
 }
 
 // ─── FECHAS DISPONIBLES ──────────────────────────────────────
-const allDates = [...new Set(MATCHES.map(m => m.d))].sort();
+const allDates = [...new Set(MATCHES.map(m => m.localDate))].sort();
 
 // ─── STAGES ──────────────────────────────────────────────────
 const STAGES = [
@@ -1400,7 +1405,7 @@ function renderMatches() {
   const today    = todayTijuana();
   const isToday  = currentDate === today;
   const isPast   = currentDate < today;
-  const matches  = MATCHES.filter(m => m.d === currentDate);
+  const matches  = MATCHES.filter(m => m.localDate === currentDate);
   const main     = document.getElementById('mainContent');
 
   // ── Sin partidos en esta fecha ──
@@ -1409,7 +1414,7 @@ function renderMatches() {
     const nextDay = allDates.find(d => d > (currentDate || today));
     let hint = '';
     if (nextDay) {
-      const nm = MATCHES.find(m => m.d === nextDay);
+      const nm = MATCHES.find(m => m.localDate === nextDay);
       hint = `<div class="next-match-hint">
         <div class="hint-label">⚡ Próximos partidos</div>
         <div class="hint-game">${formatFullDate(nextDay)}</div>
@@ -1624,7 +1629,7 @@ function selectTeamFilter(team) {
     // Ir a la fecha más próxima donde juega ese equipo
     const today = todayTijuana();
     const datesWithTeam = allDates.filter(d =>
-      MATCHES.some(m => m.d === d && (m.h === team || m.a === team))
+      MATCHES.some(m => m.localDate === d && (m.h === team || m.a === team))
     );
     const best = datesWithTeam.find(d => d >= today) || datesWithTeam[0];
     if (best) currentDate = best;
@@ -1658,7 +1663,7 @@ document.addEventListener('click', e => {
 function filteredDatesWithTeam() {
   let dates = filteredDates();
   if (!teamFilter) return dates;
-  return dates.filter(d => MATCHES.some(m => m.d === d && (m.h === teamFilter || m.a === teamFilter)));
+  return dates.filter(d => MATCHES.some(m => m.localDate === d && (m.h === teamFilter || m.a === teamFilter)));
 }
 
 // Sobreescribir renderDateBar para usar filteredDatesWithTeam
@@ -1690,7 +1695,7 @@ function renderMatches() {
   const isToday  = currentDate === today;
   const isPast   = currentDate < today;
 
-  let matches = MATCHES.filter(m => m.d === currentDate);
+  let matches = MATCHES.filter(m => m.localDate === currentDate);
   // Aplicar filtro de equipo si está activo
   if (teamFilter) {
     matches = matches.filter(m => m.h === teamFilter || m.a === teamFilter);
@@ -1701,12 +1706,12 @@ function renderMatches() {
   if (!matches.length) {
     let hint = '';
     const nextDates = teamFilter
-      ? allDates.filter(d => d > (currentDate || today) && MATCHES.some(m => m.d === d && (m.h === teamFilter || m.a === teamFilter)))
+      ? allDates.filter(d => d > (currentDate || today) && MATCHES.some(m => m.localDate === d && (m.h === teamFilter || m.a === teamFilter)))
       : allDates.filter(d => d > (currentDate || today));
     const nextDay = nextDates[0];
     if (nextDay) {
-      const nm = MATCHES.find(m => m.d === nextDay);
-      const count = MATCHES.filter(m => m.d === nextDay && (!teamFilter || m.h === teamFilter || m.a === teamFilter)).length;
+      const nm = MATCHES.find(m => m.localDate === nextDay);
+      const count = MATCHES.filter(m => m.localDate === nextDay && (!teamFilter || m.h === teamFilter || m.a === teamFilter)).length;
       hint = `<div class="next-match-hint">
         <div class="hint-label">⚡ Próximos ${teamFilter ? 'partidos de '+teamFilter : 'partidos'}</div>
         <div class="hint-game">${formatFullDate(nextDay)}</div>
@@ -2430,7 +2435,7 @@ function isMatchStarted(m) {
 // Cargar predicciones del usuario para todos los partidos del día visible
 async function loadPredictionsForDay() {
   if (!myIP) return;
-  const dayMatches = MATCHES.filter(m => m.d === currentDate);
+  const dayMatches = MATCHES.filter(m => m.localDate === currentDate);
   for (const m of dayMatches) {
     const key = `${m.d}|${m.h}|${m.a}`;
     if (myPredictions[key] === undefined) {
@@ -2446,7 +2451,7 @@ async function loadPredictionsForDay() {
 // ─── INIT ────────────────────────────────────────────────────
 function init() {
   const today  = todayTijuana();
-  const todayHasMatches = MATCHES.some(m => m.d === today);
+  const todayHasMatches = MATCHES.some(m => m.localDate === today);
   if (todayHasMatches) {
     currentDate = today;
   } else {
