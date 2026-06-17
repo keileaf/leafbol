@@ -2240,7 +2240,13 @@ const matchVotes    = {}; // cache: matchKey → {total, homeWin, draw, awayWin}
 // Cargar predicción previa del usuario para un partido
 async function loadMyPrediction(matchKey) {
   if (!myIP) return null;
-  if (myPredictions[matchKey] !== undefined) return myPredictions[matchKey];
+  // Si ya tenemos la predicción pero el partido terminó y aún no tiene result,
+  // volver a pedir al servidor por si ya calculó el resultado
+  const cached = myPredictions[matchKey];
+  const match  = MATCHES.find(m => `${m.d}|${m.h}|${m.a}` === matchKey);
+  const fin    = match && isFinished(match);
+  if (cached !== undefined && !(fin && cached && !cached.result)) return cached;
+
   try {
     const res  = await fetch(`${WEBAPP_URL}?action=myprediction&match=${encodeURIComponent(matchKey)}&ip=${encodeURIComponent(myIP)}`);
     const data = await res.json();
@@ -2251,10 +2257,52 @@ async function loadMyPrediction(matchKey) {
 
 // Cargar votos totales de un partido
 async function loadMatchVotes(matchKey) {
-  if (matchVotes[matchKey]) return matchVotes[matchKey];
+  // Si ya tenemos datos PERO el partido ya terminó, siempre refrescar
+  // para que lleguen los result actualizados del servidor
+  const match = MATCHES.find(m => `${m.d}|${m.h}|${m.a}` === matchKey);
+  const alreadyFinished = match && isFinished(match);
+  if (matchVotes[matchKey] && !alreadyFinished) return matchVotes[matchKey];
+
   try {
     const res  = await fetch(`${WEBAPP_URL}?action=predictions&match=${encodeURIComponent(matchKey)}`);
     const data = await res.json();
+
+    // ── Calcular result localmente si el servidor no lo devuelve ──
+    if (data && data.predictions) {
+      // Obtener marcador real: primero liveScores, luego datos hardcoded
+      let realH = null, realA = null;
+      const ls = liveScores[matchKey];
+      if (ls && (ls.state === 'post' || ls.detail === 'FT')) {
+        realH = Number(ls.h); realA = Number(ls.a);
+      } else if (match && match.score) {
+        realH = match.score.h; realA = match.score.a;
+      }
+
+      if (realH !== null && realA !== null) {
+        const realWinner = realH > realA ? 'home' : realA > realH ? 'away' : 'draw';
+        let exactW = [], resultW = [];
+
+        data.predictions = data.predictions.map(p => {
+          if (p.result) return p; // si el servidor ya lo calculó, respetar
+          const pH = Number(p.homeGoal), pA = Number(p.awayGoal);
+          const pWinner = pH > pA ? 'home' : pA > pH ? 'away' : 'draw';
+          if (pH === realH && pA === realA) {
+            exactW.push(p.apodo);
+            return { ...p, result: 'exact' };
+          } else if (pWinner === realWinner) {
+            resultW.push(p.apodo);
+            return { ...p, result: 'winner' };
+          } else {
+            return { ...p, result: 'miss' };
+          }
+        });
+
+        // Solo sobrescribir ganadores si el servidor no los mandó
+        if (!data.exactWinners  || data.exactWinners.length  === 0) data.exactWinners  = exactW;
+        if (!data.resultWinners || data.resultWinners.length === 0) data.resultWinners = resultW;
+      }
+    }
+
     matchVotes[matchKey] = data;
     return data;
   } catch(_) { return null; }
@@ -2319,10 +2367,29 @@ function buildPredictSection(m, matchKey, isFinished) {
 
   // Si ya votó o el partido terminó → mostrar resultado
   if (pred && pred.found) {
-    const badge = pred.result
-      ? `<span class="predict-badge ${pred.result}">${
-          pred.result==='exact'  ? '🎯 Exacto +3pts' :
-          pred.result==='winner' ? '✅ Ganador +1pt' : '❌ Fallaste'
+    // Calcular result localmente si el servidor no lo devolvió
+    let result = pred.result;
+    if (!result && isFinished) {
+      const ls = liveScores[matchKey];
+      let realH = null, realA = null;
+      if (ls && (ls.state === 'post' || ls.detail === 'FT')) {
+        realH = Number(ls.h); realA = Number(ls.a);
+      } else if (m.score) {
+        realH = m.score.h; realA = m.score.a;
+      }
+      if (realH !== null && realA !== null) {
+        const pH = Number(pred.homeGoal), pA = Number(pred.awayGoal);
+        const realWinner = realH > realA ? 'home' : realA > realH ? 'away' : 'draw';
+        const pWinner    = pH > pA       ? 'home' : pA > pH       ? 'away' : 'draw';
+        if (pH === realH && pA === realA)   result = 'exact';
+        else if (pWinner === realWinner)     result = 'winner';
+        else                                 result = 'miss';
+      }
+    }
+    const badge = result
+      ? `<span class="predict-badge ${result}">${
+          result==='exact'  ? '🎯 Exacto +3pts' :
+          result==='winner' ? '✅ Ganador +1pt' : '❌ Fallaste'
         }</span>`
       : `<span class="predict-badge pending">⏳ Pendiente</span>`;
 
