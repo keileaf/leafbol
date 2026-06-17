@@ -2527,19 +2527,36 @@ function isMatchStarted(m) {
   return Date.now() >= m._utc;
 }
 
+// Pre-carga estrellas de todos los días pasados en background (sin bloquear UI)
+async function preloadPastStars() {
+  const today = todayTijuana();
+  const pastDates = allDates.filter(d => d < today);
+  for (const d of pastDates) {
+    const dayMatches = MATCHES.filter(m => m.localDate === d);
+    // Cargar en paralelo todos los matchVotes del día
+    await Promise.all(dayMatches.map(m => {
+      const key = `${m.d}|${m.h}|${m.a}`;
+      return matchVotes[key] ? Promise.resolve() : loadMatchVotes(key);
+    }));
+    // Re-render solo si el día visible cambió para mostrar estrellas actualizadas
+    renderMatches();
+  }
+}
+
 // Cargar predicciones del usuario para todos los partidos del día visible
 async function loadPredictionsForDay() {
   if (!myIP) return;
   const dayMatches = MATCHES.filter(m => m.localDate === currentDate);
-  for (const m of dayMatches) {
+
+  // Cargar myPrediction y matchVotes en PARALELO (no secuencial)
+  await Promise.all(dayMatches.map(async m => {
     const key = `${m.d}|${m.h}|${m.a}`;
-    if (myPredictions[key] === undefined) {
-      await loadMyPrediction(key);
-    }
-    if (!matchVotes[key]) {
-      loadMatchVotes(key); // no await, carga en background
-    }
-  }
+    const [,] = await Promise.all([
+      myPredictions[key] === undefined ? loadMyPrediction(key) : Promise.resolve(),
+      matchVotes[key] ? Promise.resolve() : loadMatchVotes(key)
+    ]);
+  }));
+
   renderMatches();
 }
 
@@ -2572,8 +2589,12 @@ function init() {
   // Re-programar notificaciones cada hora
   setInterval(scheduleMatchNotifications, 3600000);
 
-  // Cargar predicciones del día (después de que myIP esté disponible)
-  setTimeout(loadPredictionsForDay, 2000);
+  // Cargar predicciones del día actual (esperar a que myIP esté disponible)
+  setTimeout(async () => {
+    await loadPredictionsForDay();
+    // Pre-cargar estrellas de días pasados en background, sin bloquear UI
+    preloadPastStars();
+  }, 2000);
 }
 
 init();
