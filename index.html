@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -2647,6 +2645,7 @@ async function trackVisitor() {
 
     myLatLon = [lat, lon];
     myIP = info.ip; // IP real para identificar "tú" en la lista
+    const badge = document.getElementById('myLocationBadge');
     const text  = document.getElementById('myLocationText');
     if (badge) badge.style.display = 'block';
     if (text)  text.textContent = `Tu ubicación: ${info.city}, ${info.country}`;
