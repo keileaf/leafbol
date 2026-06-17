@@ -2237,6 +2237,33 @@ function renderStandings(group) {
 const myPredictions = {}; // cache local: matchKey → {homeGoal, awayGoal, result, points}
 const matchVotes    = {}; // cache: matchKey → {total, homeWin, draw, awayWin}
 
+// Normaliza apodo: minusculas + trim (a = A)
+function normalizeNick(nick) {
+  return (nick || '').toLowerCase().trim();
+}
+
+// Mapa global de estrellas acumuladas: normalizedNick -> count de exactos
+const nickStars = {};
+
+function updateNickStars(votes) {
+  if (!votes || !votes.predictions) return;
+  votes.predictions.forEach(p => {
+    if (p.result === 'exact') {
+      const k = normalizeNick(p.apodo);
+      nickStars[k] = (nickStars[k] || 0) + 1;
+    }
+  });
+}
+
+function starsFor(apodo) {
+  return nickStars[normalizeNick(apodo)] || 0;
+}
+
+function renderStars(n) {
+  if (!n) return '';
+  return ' ' + '⭐'.repeat(Math.min(n, 10));
+}
+
 // Cargar predicción previa del usuario para un partido
 async function loadMyPrediction(matchKey) {
   if (!myIP) return null;
@@ -2303,6 +2330,7 @@ async function loadMatchVotes(matchKey) {
       }
     }
 
+    updateNickStars(data);
     matchVotes[matchKey] = data;
     return data;
   } catch(_) { return null; }
@@ -2423,7 +2451,7 @@ function buildPredictSection(m, matchKey, isFinished) {
         showToast('⚠️ Escribe un apodo para votar');
         return;
       }
-      window.__pendingApodo = nick;
+      window.__pendingApodo = normalizeNick(nick);
       submitPrediction(k,'${m.h.replace(/'/g,"\\'")}','${m.a.replace(/'/g,"\\'")}',h,a,this);
     }).call(this)">Votar pronóstico</button>`;
   }
@@ -2460,7 +2488,7 @@ function buildPredictSection(m, matchKey, isFinished) {
                     p.result === 'winner' ? '✅' :
                     p.result === 'miss'   ? '❌' : '';
       html += `<div class="predict-all-row">
-        <span class="pal-apodo">${p.apodo}</span>
+        <span class="pal-apodo">${p.apodo}${renderStars(starsFor(p.apodo))}</span>
         <span class="pal-score">${p.homeGoal}–${p.awayGoal}</span>
         ${badge ? `<span class="pal-badge">${badge}</span>` : ''}
       </div>`;
@@ -2474,13 +2502,13 @@ function buildPredictSection(m, matchKey, isFinished) {
     if (votes.exactWinners && votes.exactWinners.length > 0) {
       html += `<div class="predict-winners-row exact">
         <span>🎯 Acertaron el resultado exacto:</span>
-        <span class="w-names">${votes.exactWinners.join(', ')}</span>
+        <span class="w-names">${votes.exactWinners.map(n => n + renderStars(starsFor(n))).join(', ')}</span>
       </div>`;
     }
     if (votes.resultWinners && votes.resultWinners.length > 0) {
       html += `<div class="predict-winners-row winner">
         <span>✅ Acertaron el ganador:</span>
-        <span class="w-names">${votes.resultWinners.join(', ')}</span>
+        <span class="w-names">${votes.resultWinners.map(n => n + renderStars(starsFor(n))).join(', ')}</span>
       </div>`;
     }
     if ((!votes.exactWinners || votes.exactWinners.length === 0) &&
