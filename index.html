@@ -800,6 +800,7 @@ main { padding: 14px 12px; max-width: 680px; margin: 0 auto; }
 .predict-winners-row.exact .w-names { color: var(--accent2); }
 .predict-winners-row.winner .w-names { color: var(--accent); }
 .predict-winners-row.nobody { color: var(--muted); font-style: italic; }
+.predict-winners-row.score-real { color: var(--text); font-size: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.07); padding-bottom: 4px; margin-bottom: 4px; }
 
 /* ── MATCH DETAILS (goles + tarjetas) ───────── */
 .match-details {
@@ -2498,21 +2499,47 @@ function buildPredictSection(m, matchKey, isFinished) {
 
   // Resultados de la quiniela (solo cuando el partido terminó)
   if (isFinished && votes && votes.total > 0) {
+    // Obtener el marcador real (hardcodeado o de ESPN)
+    let realH = null, realA = null;
+    const ls = liveScores[matchKey];
+    if (ls && (ls.state === 'post' || ls.detail === 'FT')) {
+      realH = Number(ls.h); realA = Number(ls.a);
+    } else if (m.score) {
+      realH = m.score.h; realA = m.score.a;
+    }
+
+    // Si el backend ya calculó los puntos, usar esos; si no, calcular en frontend
+    let exactWinners  = votes.exactWinners  || [];
+    let resultWinners = votes.resultWinners || [];
+
+    if (realH !== null && (exactWinners.length === 0 && resultWinners.length === 0)) {
+      // Calcular localmente desde predictions
+      const realWinner = realH > realA ? 'home' : realA > realH ? 'away' : 'draw';
+      votes.predictions.forEach(p => {
+        const pH = Number(p.homeGoal), pA = Number(p.awayGoal);
+        const pWinner = pH > pA ? 'home' : pA > pH ? 'away' : 'draw';
+        if (pH === realH && pA === realA)      exactWinners.push(p.apodo);
+        else if (pWinner === realWinner)        resultWinners.push(p.apodo);
+      });
+    }
+
     html += `<div class="predict-winners">`;
-    if (votes.exactWinners && votes.exactWinners.length > 0) {
+    if (realH !== null) {
+      html += `<div class="predict-winners-row score-real">⚽ Resultado: <strong>${realH}–${realA}</strong></div>`;
+    }
+    if (exactWinners.length > 0) {
       html += `<div class="predict-winners-row exact">
         <span>🎯 Acertaron el resultado exacto:</span>
-        <span class="w-names">${votes.exactWinners.map(n => n + renderStars(starsFor(n))).join(', ')}</span>
+        <span class="w-names">${exactWinners.map(n => n + renderStars(starsFor(n))).join(', ')}</span>
       </div>`;
     }
-    if (votes.resultWinners && votes.resultWinners.length > 0) {
+    if (resultWinners.length > 0) {
       html += `<div class="predict-winners-row winner">
         <span>✅ Acertaron el ganador:</span>
-        <span class="w-names">${votes.resultWinners.map(n => n + renderStars(starsFor(n))).join(', ')}</span>
+        <span class="w-names">${resultWinners.map(n => n + renderStars(starsFor(n))).join(', ')}</span>
       </div>`;
     }
-    if ((!votes.exactWinners || votes.exactWinners.length === 0) &&
-        (!votes.resultWinners || votes.resultWinners.length === 0)) {
+    if (exactWinners.length === 0 && resultWinners.length === 0) {
       html += `<div class="predict-winners-row nobody">😅 Nadie acertó</div>`;
     }
     html += `</div>`;
