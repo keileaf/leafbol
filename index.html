@@ -1190,7 +1190,7 @@ const RAW = [
   {d:'2026-06-17',g:'K',h:'Portugal',      a:'Rep. Dem. Congo',    hf:'🇵🇹',af:'🇨🇩',et:'1:00 PM', v:'NRG, Houston'},
   {d:'2026-06-17',g:'L',h:'Inglaterra',    a:'Croacia',            hf:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',af:'🇭🇷',et:'4:00 PM', v:'AT&T, Arlington'},
   {d:'2026-06-17',g:'L',h:'Ghana',         a:'Panamá',             hf:'🇬🇭',af:'🇵🇦',et:'7:00 PM', v:'BMO Field, Toronto'},
-  {d:'2026-06-17',g:'K',h:'Uzbekistán',    a:'Colombia',           hf:'🇺🇿',af:'🇨🇴',et:'10:00 PM',v:'Azteca, CDMX'},
+  {d:'2026-06-17',g:'K',h:'Uzbekistán',    a:'Colombia',           hf:'🇺🇿',af:'🇨🇴',et:'10:00 PM',v:'Azteca, CDMX',           score:{h:0,a:3}},
   // Jun 18 — Jueves
   {d:'2026-06-18',g:'A',h:'Chequia',       a:'Sudáfrica',          hf:'🇨🇿',af:'🇿🇦',et:'12:00 PM',v:'Mercedes-Benz, Atlanta'},
   {d:'2026-06-18',g:'B',h:'Suiza',         a:'Bosnia-Herzegovina', hf:'🇨🇭',af:'🇧🇦',et:'3:00 PM', v:'SoFi, Inglewood'},
@@ -2523,26 +2523,28 @@ function buildPredictSection(m, matchKey, isFinished) {
       });
     }
 
-    html += `<div class="predict-winners">`;
-    if (realH !== null) {
+    if (realH === null) {
+      html += `<div class="predict-winners"><div class="predict-winners-row nobody">⏳ Resultado pendiente...</div></div>`;
+    } else {
+      html += `<div class="predict-winners">`;
       html += `<div class="predict-winners-row score-real">⚽ Resultado: <strong>${realH}–${realA}</strong></div>`;
+      if (exactWinners.length > 0) {
+        html += `<div class="predict-winners-row exact">
+          <span>🎯 Acertaron el resultado exacto:</span>
+          <span class="w-names">${exactWinners.map(n => n + renderStars(starsFor(n))).join(', ')}</span>
+        </div>`;
+      }
+      if (resultWinners.length > 0) {
+        html += `<div class="predict-winners-row winner">
+          <span>✅ Acertaron el ganador:</span>
+          <span class="w-names">${resultWinners.map(n => n + renderStars(starsFor(n))).join(', ')}</span>
+        </div>`;
+      }
+      if (exactWinners.length === 0 && resultWinners.length === 0) {
+        html += `<div class="predict-winners-row nobody">😅 Nadie acertó</div>`;
+      }
+      html += `</div>`;
     }
-    if (exactWinners.length > 0) {
-      html += `<div class="predict-winners-row exact">
-        <span>🎯 Acertaron el resultado exacto:</span>
-        <span class="w-names">${exactWinners.map(n => n + renderStars(starsFor(n))).join(', ')}</span>
-      </div>`;
-    }
-    if (resultWinners.length > 0) {
-      html += `<div class="predict-winners-row winner">
-        <span>✅ Acertaron el ganador:</span>
-        <span class="w-names">${resultWinners.map(n => n + renderStars(starsFor(n))).join(', ')}</span>
-      </div>`;
-    }
-    if (exactWinners.length === 0 && resultWinners.length === 0) {
-      html += `<div class="predict-winners-row nobody">😅 Nadie acertó</div>`;
-    }
-    html += `</div>`;
   }
 
   html += `</div>`;
