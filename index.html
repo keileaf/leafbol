@@ -1301,23 +1301,7 @@ const MATCHES = RAW.map(m => {
   };
 });
 
-// ── ESTADO: determinar si un partido está terminado ──────────
-// Un partido se considera "terminado" si su hora PDT ya pasó hace 2h+ 
-function isFinished(m) {
-  const now = nowTijuana(); // "YYYY-MM-DD HH:MM"
-  const mdt = matchDateTime(m); // "YYYY-MM-DD HH:MM" en PDT
-  // partido termina aprox 2h después del inicio
-  const [md, mt] = mdt.split(' ');
-  const [mh, mm] = mt.split(':').map(Number);
-  let endH = mh + 2;
-  const endStr = `${md} ${endH.toString().padStart(2,'0')}:${mm.toString().padStart(2,'0')}`;
-  return now > endStr;
-}
-
-function isUpcoming(m) {
-  const now = nowTijuana();
-  return matchDateTime(m) > now;
-}
+// ── ESTADO: isFinished usa la función definida arriba (UTC puro) ─
 
 // ─── FECHAS DISPONIBLES ──────────────────────────────────────
 const allDates = [...new Set(MATCHES.map(m => m.localDate))].sort();
