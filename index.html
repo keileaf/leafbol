@@ -870,6 +870,67 @@ footer {
 }
 
 /* ── VISITOR MAP PANEL ───────────────────────── */
+/* ── RANKING ─────────────────────────────────── */
+.ranking-section {
+  margin: 12px auto 0;
+  max-width: 480px;
+  background: var(--card);
+  border: 1px solid rgba(232,194,58,0.2);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.ranking-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  background: linear-gradient(90deg, rgba(232,194,58,0.15), transparent);
+  border-bottom: 1px solid rgba(232,194,58,0.15);
+}
+.ranking-icon { font-size: 1.1rem; }
+.ranking-title { font-size: 0.7rem; font-weight: 800; letter-spacing: 1.5px; color: var(--accent); }
+.ranking-empty { padding: 16px; text-align: center; color: var(--muted); font-size: 0.75rem; }
+
+/* Podio */
+.ranking-podium {
+  display: flex; align-items: flex-end; justify-content: center;
+  gap: 8px; padding: 16px 12px 8px;
+}
+.podium-place {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  flex: 1; max-width: 120px;
+}
+.podium-crown   { font-size: 1.4rem; line-height: 1; }
+.podium-name    { font-size: 0.7rem; font-weight: 700; color: var(--text); text-align: center; word-break: break-word; }
+.podium-pts     { font-size: 0.65rem; color: var(--muted); }
+.podium-bar {
+  width: 100%; border-radius: 6px 6px 0 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; font-weight: 800; color: #0a0f1a;
+}
+.podium-bar.p1  { height: 64px; background: linear-gradient(180deg,#ffd700,#e8c23a); font-size: 1.1rem; }
+.podium-bar.p2  { height: 48px; background: linear-gradient(180deg,#c0c0c0,#a0a0a0); }
+.podium-bar.p3  { height: 36px; background: linear-gradient(180deg,#cd7f32,#a0622a); }
+.podium-stats   { font-size: 0.55rem; color: var(--muted); text-align: center; margin-top: 2px; }
+
+/* Tabla */
+.ranking-table  { width: 100%; border-collapse: collapse; }
+.ranking-table th {
+  font-size: 0.55rem; font-weight: 700; letter-spacing: 1px;
+  color: var(--muted); text-align: left; padding: 6px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.ranking-table th.num { text-align: center; }
+.ranking-table td { padding: 7px 10px; font-size: 0.7rem; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.ranking-table td.num { text-align: center; color: var(--muted); font-size: 0.65rem; }
+.ranking-table td.pts { text-align: center; font-weight: 800; color: var(--accent); }
+.ranking-table td.exact-col { text-align: center; color: #e8c23a; }
+.ranking-table td.winner-col { text-align: center; color: #4caf50; }
+.ranking-table tr:last-child td { border-bottom: none; }
+.ranking-table tr.me td { background: rgba(232,194,58,0.07); }
+.ranking-pos { display: inline-block; width: 18px; text-align: center; color: var(--muted); font-size: 0.65rem; }
+.ranking-pos.top { color: var(--accent); font-weight: 800; }
+.ranking-nick { font-weight: 600; }
+.ranking-nick .me-badge { font-size: 0.55rem; color: var(--accent); margin-left: 4px; }
+
 .visitor-section {
   max-width: 680px;
   margin: 0 auto;
@@ -1016,6 +1077,16 @@ footer {
 <main id="mainContent"></main>
 
 <!-- ── VISITOR MAP SECTION ── -->
+<section class="ranking-section" id="rankingSection">
+  <div class="ranking-header">
+    <span class="ranking-icon">🏆</span>
+    <span class="ranking-title">TABLA DE CAMPEONES</span>
+  </div>
+  <div id="rankingBody">
+    <div class="ranking-empty">Cargando resultados...</div>
+  </div>
+</section>
+
 <section class="visitor-section">
   <button class="visitor-toggle" id="visitorToggle" onclick="toggleVisitorPanel()">
     <span class="vt-icon">🌍</span>
@@ -1676,6 +1747,15 @@ function renderDateBar() {
 // Sobreescribir renderMatches para filtrar por equipo
 const _renderMatchesOrig = renderMatches;
 function renderMatches() {
+  // ── Guardar valores de inputs activos antes de re-renderizar ──
+  const savedInputs = {};
+  document.querySelectorAll('input[id^="ph_"], input[id^="pa_"], input[id^="nick_"]').forEach(el => {
+    if (document.activeElement === el || el.value !== '' && el.value !== '0') {
+      savedInputs[el.id] = el.value;
+    }
+  });
+  const focusedId = document.activeElement ? document.activeElement.id : null;
+
   const today    = todayTijuana();
   const isToday  = currentDate === today;
   const isPast   = currentDate < today;
@@ -1837,6 +1917,88 @@ function renderMatches() {
   });
 
   main.innerHTML = html;
+
+  // ── Restaurar valores de inputs que el usuario estaba editando ──
+  Object.entries(savedInputs).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  });
+  if (focusedId) {
+    const el = document.getElementById(focusedId);
+    if (el) { el.focus(); el.setSelectionRange && el.setSelectionRange(el.value.length, el.value.length); }
+  }
+}
+
+// ─── RANKING DE CAMPEONES ────────────────────────────────────
+function renderRanking() {
+  const el = document.getElementById('rankingBody');
+  if (!el) return;
+
+  // Construir lista ordenada: pts desc, exactos desc, ganadores desc, nombre asc
+  const list = Object.entries(nickPoints)
+    .map(([k, v]) => ({ ...v, key: k }))
+    .filter(v => v.points > 0)
+    .sort((a, b) =>
+      b.points - a.points ||
+      b.exact  - a.exact  ||
+      b.winner - a.winner ||
+      a.display.localeCompare(b.display)
+    );
+
+  if (!list.length) {
+    el.innerHTML = '<div class="ranking-empty">Aún no hay resultados calculados</div>';
+    return;
+  }
+
+  const myNick = normalizeNick(window.__myApodo || '');
+
+  // ── Podio (top 3) ──
+  const crowns = ['🥇','🥈','🥉'];
+  const pClasses = ['p1','p2','p3'];
+  const top3 = list.slice(0, 3);
+
+  // Reordenar podio: 2do izq, 1ro centro, 3ro derecha
+  const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean);
+  const podiumBars  = top3[1] ? [pClasses[1], pClasses[0], pClasses[2]] : [pClasses[0]];
+  const podiumCrowns = top3[1] ? [crowns[1], crowns[0], crowns[2]] : [crowns[0]];
+
+  let podiumHtml = '<div class="ranking-podium">';
+  podiumOrder.forEach((p, i) => {
+    const origIdx = top3.indexOf(p);
+    podiumHtml += `<div class="podium-place">
+      <div class="podium-crown">${podiumCrowns[i]}</div>
+      <div class="podium-name">${p.display}</div>
+      <div class="podium-pts">${p.points} pts</div>
+      <div class="podium-bar ${podiumBars[i]}">${p.points}</div>
+      <div class="podium-stats">🎯${p.exact} &nbsp; ✅${p.winner}</div>
+    </div>`;
+  });
+  podiumHtml += '</div>';
+
+  // ── Tabla completa ──
+  let tableHtml = `<table class="ranking-table">
+    <thead><tr>
+      <th class="num">#</th>
+      <th>Apodo</th>
+      <th class="num">🎯</th>
+      <th class="num">✅</th>
+      <th class="num">Pts</th>
+    </tr></thead><tbody>`;
+
+  list.forEach((p, i) => {
+    const isMe = myNick && p.key === myNick;
+    const posClass = i < 3 ? 'top' : '';
+    tableHtml += `<tr class="${isMe ? 'me' : ''}">
+      <td class="num"><span class="ranking-pos ${posClass}">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i+1}</span></td>
+      <td><span class="ranking-nick">${p.display}${isMe ? '<span class="me-badge">← tú</span>' : ''}</span></td>
+      <td class="exact-col">${p.exact || '—'}</td>
+      <td class="winner-col">${p.winner || '—'}</td>
+      <td class="pts">${p.points}</td>
+    </tr>`;
+  });
+
+  tableHtml += '</tbody></table>';
+  el.innerHTML = podiumHtml + tableHtml;
 }
 
 // ─── API DE RESULTADOS ───────────────────────────────────────
@@ -2227,17 +2389,27 @@ function normalizeNick(nick) {
   return (nick || '').toLowerCase().trim();
 }
 
-// Mapa global de estrellas acumuladas: normalizedNick -> count de exactos
-const nickStars = {};
+// Mapa global de puntos acumulados: normalizedNick -> {exact, winner, points, display}
+const nickStars  = {}; // exactos (para compatibilidad con renderStars)
+const nickPoints = {}; // tabla completa: {exact, winner, points, display}
 
 function updateNickStars(votes) {
   if (!votes || !votes.predictions) return;
   votes.predictions.forEach(p => {
+    if (!p.result || p.result === '') return;
+    const k = normalizeNick(p.apodo);
+    const display = p.apodo; // preservar capitalización original
+    if (!nickPoints[k]) nickPoints[k] = { exact: 0, winner: 0, points: 0, display };
     if (p.result === 'exact') {
-      const k = normalizeNick(p.apodo);
-      nickStars[k] = (nickStars[k] || 0) + 1;
+      nickStars[k]  = (nickStars[k] || 0) + 1;
+      nickPoints[k].exact  += 1;
+      nickPoints[k].points += 3;
+    } else if (p.result === 'winner') {
+      nickPoints[k].winner  += 1;
+      nickPoints[k].points  += 1;
     }
   });
+  renderRanking();
 }
 
 function starsFor(apodo) {
