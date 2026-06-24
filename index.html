@@ -888,6 +888,15 @@ footer {
 .ranking-icon { font-size: 1.1rem; }
 .ranking-title { font-size: 0.7rem; font-weight: 800; letter-spacing: 1.5px; color: var(--accent); }
 .ranking-empty { padding: 16px; text-align: center; color: var(--muted); font-size: 0.75rem; }
+.ranking-legend {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;
+  padding: 7px 14px;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 0.62rem; color: var(--muted);
+}
+.legend-item strong { color: var(--text); }
+.legend-sep { color: rgba(255,255,255,0.2); }
 
 /* Podio */
 .ranking-podium {
@@ -1081,6 +1090,13 @@ footer {
   <div class="ranking-header">
     <span class="ranking-icon">🏆</span>
     <span class="ranking-title">TABLA DE CAMPEONES</span>
+  </div>
+  <div class="ranking-legend">
+    <span class="legend-item"><span class="legend-badge exact">🎯</span> Marcador exacto = <strong>3 pts</strong></span>
+    <span class="legend-sep">·</span>
+    <span class="legend-item"><span class="legend-badge winner">✅</span> Ganador correcto = <strong>1 pt</strong></span>
+    <span class="legend-sep">·</span>
+    <span class="legend-item"><span class="legend-badge miss">❌</span> Nada = <strong>0 pts</strong></span>
   </div>
   <div id="rankingBody">
     <div class="ranking-empty">Cargando resultados...</div>
