@@ -2674,9 +2674,18 @@ function buildPredictSection(m, matchKey, isFinished) {
       votes.predictions.forEach(p => {
         const pH = Number(p.homeGoal), pA = Number(p.awayGoal);
         const pWinner = pH > pA ? 'home' : pA > pH ? 'away' : 'draw';
-        if (pH === realH && pA === realA)      exactWinners.push(p.apodo);
-        else if (pWinner === realWinner)        resultWinners.push(p.apodo);
+        if (pH === realH && pA === realA) {
+          exactWinners.push(p.apodo);
+          p.result = 'exact'; // inyectar para que updateNickStars lo acumule
+        } else if (pWinner === realWinner) {
+          resultWinners.push(p.apodo);
+          p.result = 'winner';
+        } else {
+          p.result = 'miss';
+        }
       });
+      // Acumular en el ranking global
+      updateNickStars(votes);
     }
 
     if (realH === null) {
@@ -2714,18 +2723,21 @@ function isMatchStarted(m) {
 
 // Pre-carga estrellas de todos los días pasados en background (sin bloquear UI)
 async function preloadPastStars() {
-  const today = todayTijuana();
-  const pastDates = allDates.filter(d => d < today);
-  for (const d of pastDates) {
-    const dayMatches = MATCHES.filter(m => m.localDate === d);
-    // Cargar en paralelo todos los matchVotes del día
-    await Promise.all(dayMatches.map(m => {
+  // Cargar votos de TODOS los partidos terminados (días pasados + los de hoy que ya acabaron)
+  const finishedMatches = MATCHES.filter(m => isFinished(m));
+
+  // Cargar en paralelo por lotes de 4 para no saturar
+  const batchSize = 4;
+  for (let i = 0; i < finishedMatches.length; i += batchSize) {
+    const batch = finishedMatches.slice(i, i + batchSize);
+    await Promise.all(batch.map(m => {
       const key = `${m.d}|${m.h}|${m.a}`;
       return matchVotes[key] ? Promise.resolve() : loadMatchVotes(key);
     }));
-    // Re-render solo si el día visible cambió para mostrar estrellas actualizadas
-    renderMatches();
   }
+  // Un solo re-render al final con el ranking completo
+  renderMatches();
+  renderRanking();
 }
 
 // Cargar predicciones del usuario para todos los partidos del día visible
