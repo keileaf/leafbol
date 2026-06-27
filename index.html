@@ -534,87 +534,84 @@ main { padding: 14px 12px; max-width: 680px; margin: 0 auto; }
 .bracket-btn { border-color: rgba(232,194,58,0.3); }
 
 /* ── BRACKET MODAL ───────────────────────────── */
-.bracket-modal { max-width: 98vw; width: 780px; max-height: 88vh; }
+.bracket-modal { max-width: 99vw; width: 820px; max-height: 92vh; }
+#bracketBody { overflow: auto; padding: 10px 8px 16px; }
 
-.bracket-wrap {
+.bracket-legend {
+  display: flex; gap: 12px; justify-content: center;
+  font-size: 0.58rem; color: var(--muted); margin-bottom: 10px;
+}
+
+/* Árbol de bracket */
+.bracket-tree {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0;
-  min-width: 700px;
+  min-width: 600px;
 }
 
-/* Columnas del bracket */
-.bracket-col {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  gap: 0;
-}
-.bracket-col.r32-l  { width: 110px; }
-.bracket-col.r16-l  { width: 90px; }
-.bracket-col.qf-l   { width: 80px; }
-.bracket-col.sf-l   { width: 72px; }
-.bracket-col.final  { width: 90px; flex-shrink:0; }
-.bracket-col.sf-r   { width: 72px; }
-.bracket-col.qf-r   { width: 80px; }
-.bracket-col.r16-r  { width: 90px; }
-.bracket-col.r32-r  { width: 110px; }
+/* Mitades */
+.bh { display: flex; align-items: center; gap: 0; }
+.bh-left  { flex-direction: row; }
+.bh-right { flex-direction: row-reverse; }
 
-/* Labels de ronda */
-.round-label {
-  font-size: 0.52rem; font-weight: 800; letter-spacing: 1.2px;
-  color: var(--accent); text-align: center;
-  padding: 0 0 6px; white-space: nowrap;
-}
+/* Par (2 grupos → 1 QF) */
+.bp { display: flex; align-items: center; gap: 0; }
+.bh-left  .bp { flex-direction: row; }
+.bh-right .bp { flex-direction: row-reverse; }
 
-/* Slot de equipo */
-.b-slot {
-  display: flex; align-items: center; gap: 4px;
-  padding: 4px 5px; border-radius: 5px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  font-size: 0.62rem; font-weight: 600; color: var(--text);
-  min-height: 26px; margin: 1px 0;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  transition: border-color .2s;
-  position: relative;
-}
-.b-slot.confirmed { border-color: rgba(76,175,80,0.5); }
-.b-slot.projected { border-color: rgba(232,194,58,0.4); }
-.b-slot.winner    { border-color: var(--accent); background: rgba(232,194,58,0.1); color: var(--accent); }
-.b-slot.tbd       { color: var(--muted); font-style: italic; font-size: 0.55rem; }
-.b-slot .b-flag   { font-size: 0.85rem; flex-shrink: 0; }
-.b-slot .b-name   { overflow: hidden; text-overflow: ellipsis; }
-.b-slot .b-score  { margin-left: auto; font-size: 0.6rem; color: var(--accent); font-weight: 800; flex-shrink:0; }
+/* Grupo (2 R32 → 1 R16) */
+.bg { display: flex; align-items: center; gap: 0; }
+.bh-left  .bg { flex-direction: row; }
+.bh-right .bg { flex-direction: row-reverse; }
 
-/* Par de equipos en un enfrentamiento */
-.b-match {
-  display: flex; flex-direction: column;
-  position: relative;
-}
-.b-match::after {
-  content: ''; position: absolute;
-  right: -1px; top: 25%; height: 50%;
-  border-right: 1px solid rgba(232,194,58,0.25);
-}
-.bracket-col.r32-r .b-match::after,
-.bracket-col.r16-r .b-match::after,
-.bracket-col.qf-r  .b-match::after,
-.bracket-col.sf-r  .b-match::after {
-  right: auto; left: -1px;
-  border-right: none; border-left: 1px solid rgba(232,194,58,0.25);
-}
+.bg-r32 { display: flex; flex-direction: column; gap: 4px; }
 
-/* Columna central final */
-.final-slot {
-  display: flex; flex-direction: column; align-items: center;
-  justify-content: center; gap: 4px; padding: 8px 4px;
-}
-.final-label { font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; color: var(--accent); text-align: center; }
-.trophy-icon { font-size: 2rem; line-height: 1; }
+/* Conectores */
+.bg-connector { width: 8px; display: flex; align-items: center; justify-content: center; position: relative; align-self: stretch; }
+.bc-v  { width: 1px; height: 60%; background: rgba(232,194,58,0.3); margin: 0 auto; }
+.bp-connector { width: 8px; align-self: stretch; display: flex; align-items: center; justify-content: center; }
+.bc-v2 { width: 1px; height: 50%; background: rgba(232,194,58,0.25); margin: 0 auto; }
+.bc-v3 { width: 1px; height: 40%; background: rgba(232,194,58,0.2); margin: 0 auto; }
 
-/* Conectores horizontales */
-.b-connector { width: 8px; border-top: 1px solid rgba(232,194,58,0.2); align-self: center; flex-shrink:0; }
+/* Partidos */
+.bm { display: flex; flex-direction: column; gap: 2px; }
+.bg-r16 { padding: 0 2px; }
+.bp-qf  { padding: 0 2px; }
+.bsf    { padding: 0 2px; }
+
+/* Slots */
+.bs {
+  display: flex; align-items: center; gap: 3px;
+  padding: 3px 5px; border-radius: 4px;
+  background: var(--surface2); border: 1px solid var(--border);
+  font-size: 0.58rem; font-weight: 600; color: var(--text);
+  min-height: 22px; min-width: 80px; max-width: 100px;
+  white-space: nowrap; overflow: hidden;
+}
+.bs.conf   { border-color: rgba(76,175,80,0.4); }
+.bs.proj   { border-color: rgba(232,194,58,0.3); }
+.bs.winner { border-color: var(--accent); background: rgba(232,194,58,0.12); color: var(--accent); font-weight: 800; }
+.bs.tbd    { color: var(--muted); font-style: italic; min-width: 60px; justify-content: center; }
+.bf { font-size: 0.8rem; flex-shrink: 0; }
+.bn { overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.bsc { margin-left: auto; font-size: 0.6rem; color: var(--accent); font-weight: 800; flex-shrink: 0; padding-left: 2px; }
+
+/* Partidos más grandes en rondas avanzadas */
+.r16m .bs { min-width: 88px; }
+.qfm  .bs { min-width: 92px; }
+.sfm  .bs { min-width: 96px; }
+.finm .bs { min-width: 100px; font-size: 0.62rem; }
+
+/* Centro - Final */
+.bfinal {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 0 6px; flex-shrink: 0;
+}
+.bfinal-label { font-size: 0.62rem; font-weight: 800; color: var(--accent); letter-spacing: 1px; }
+.bfinal-date  { font-size: 0.52rem; color: var(--muted); text-align: center; }
+.bchamp { font-size: 0.7rem; font-weight: 800; color: var(--accent); text-align: center; margin-top: 4px; }
 
 /* ── STANDINGS MODAL ─────────────────────────── */
 .standings-overlay {
@@ -2592,121 +2589,154 @@ function renderBracket() {
   const el = document.getElementById('bracketBody');
   if (!el) return;
 
-  // Obtener todos los partidos por stage
-  const r32 = MATCHES.filter(m => m.s === 'R32');
-  const r16 = MATCHES.filter(m => m.s === 'R16');
-  const qf  = MATCHES.filter(m => m.s === 'QF');
-  const sf  = MATCHES.filter(m => m.s === 'SF');
-  const fin = MATCHES.filter(m => m.s === 'F');
+  // Mapear partidos por stage indexados desde 73
+  const r32 = MATCHES.filter(m => m.s === 'R32'); // índices 0-15 → partidos 73-88
+  const r16  = MATCHES.filter(m => m.s === 'R16'); // índices 0-7  → partidos 89-96 (W73+W75, etc)
+  const qf   = MATCHES.filter(m => m.s === 'QF');
+  const sf   = MATCHES.filter(m => m.s === 'SF');
+  const fin  = MATCHES.filter(m => m.s === 'F');
 
-  // Resolver cada partido
-  const r32data = r32.map(m => resolveKOMatch(m));
-  const r16data = r16.map(m => ({ ...resolveKOMatch(m), orig: m }));
-  const qfdata  = qf.map(m  => ({ ...resolveKOMatch(m), orig: m }));
-  const sfdata  = sf.map(m  => ({ ...resolveKOMatch(m), orig: m }));
-  const findata = fin.map(m => ({ ...resolveKOMatch(m), orig: m }));
+  // Resolver nombre real de un slot (puede ser "1ro. C", "Sub. A", "3ro. ABC", "W73", etc.)
+  function resolveName(slot) {
+    if (!slot) return { name:'?', status:'tbd' };
+    // Ganador de partido previo W##
+    const wm = slot.match(/^W(\d+)$/);
+    if (wm) {
+      const idx = parseInt(wm[1]) - 73; // 73=primer R32
+      const m = r32[idx] || r16[parseInt(wm[1])-89] || qf[parseInt(wm[1])-97];
+      if (!m) return { name: slot, status:'tbd' };
+      const res = getMatchResult(m);
+      if (res.winner) return { name: res.winner, status:'confirmed' };
+      // Si el partido aun no se juega, mostrar "Por definir"
+      return { name:'Por definir', status:'tbd' };
+    }
+    // Slot de grupo
+    return resolveSlot(slot);
+  }
 
-  // Función para renderizar un match (dos slots)
-  function matchHtml(home, away, homeScore, awayScore, winner) {
-    const hWin = winner === home;
-    const aWin = winner === away;
-    const hScore = homeScore !== null ? homeScore : '';
-    const aScore = awayScore !== null ? awayScore : '';
-    const hStatus = hWin ? 'winner' : (home && !home.startsWith('Por')) ? 'confirmed' : '';
-    const aStatus = aWin ? 'winner' : (away && !away.startsWith('Por')) ? 'confirmed' : '';
-    return `<div class="b-match">
-      ${bSlot(home, hStatus, hScore !== '' ? `${hScore}` : '')}
-      ${bSlot(away, aStatus, aScore !== '' ? `${aScore}` : '')}
+  function getMatchResult(m) {
+    if (!m) return { home:null, away:null, hScore:null, aScore:null, winner:null };
+    const key = `${m.d}|${m.h}|${m.a}`;
+    const ls = liveScores[key];
+    const rHome = resolveName(m.h);
+    const rAway = resolveName(m.a);
+    let hScore = null, aScore = null, winner = null;
+    if (ls && (ls.state === 'post' || ls.detail === 'FT')) {
+      hScore = ls.h; aScore = ls.a;
+      winner = hScore > aScore ? rHome.name : aScore > hScore ? rAway.name : null;
+    } else if (m.score) {
+      hScore = m.score.h; aScore = m.score.a;
+      winner = hScore > aScore ? rHome.name : aScore > hScore ? rAway.name : null;
+    }
+    return { home: rHome, away: rAway, hScore, aScore, winner };
+  }
+
+  // Renderizar un slot individual
+  function slot(info, score, isWinner) {
+    if (!info || info.name === '?' || info.name === 'Por definir' || info.status === 'tbd') {
+      return `<div class="bs tbd">❓</div>`;
+    }
+    const flag = teamFlag(info.name);
+    const cls = isWinner ? 'winner' : info.status === 'confirmed' ? 'conf' : 'proj';
+    const sc = score !== null && score !== undefined ? `<span class="bsc">${score}</span>` : '';
+    const shortName = info.name.length > 10 ? info.name.substring(0,10)+'…' : info.name;
+    return `<div class="bs ${cls}"><span class="bf">${flag}</span><span class="bn">${shortName}</span>${sc}</div>`;
+  }
+
+  // Renderizar un partido (par de slots)
+  function match(m, extraClass='') {
+    const r = getMatchResult(m);
+    const hWin = r.winner === r.home?.name;
+    const aWin = r.winner === r.away?.name;
+    return `<div class="bm ${extraClass}">
+      ${slot(r.home, r.hScore, hWin)}
+      ${slot(r.away, r.aScore, aWin)}
     </div>`;
   }
 
-  // Dividir R32 en 8 izq y 8 der (bracket oficial)
-  // Partidos 1-8 izquierda, 9-16 derecha
-  const r32L = r32data.slice(0, 8);
-  const r32R = r32data.slice(8, 16);
-  const r16L = r16data.slice(0, 4);
-  const r16R = r16data.slice(4, 8);
-  const qfL  = qfdata.slice(0, 2);
-  const qfR  = qfdata.slice(2, 4);
-  const sfL  = sfdata.slice(0, 1);
-  const sfR  = sfdata.slice(1, 2);
-  const finM = findata[0];
+  // Estructura del bracket: 2 mitades de 8 R32 cada una
+  // Izquierda: R32[0-7] → R16[0-3] → QF[0-1] → SF[0] → Final
+  // Derecha:   R32[8-15] → R16[4-7] → QF[2-3] → SF[1] → Final
 
-  function colHtml(matches, spacingClass) {
-    return matches.map(m => matchHtml(m.home, m.away, m.homeScore, m.awayScore, m.winner)).join(`<div style="height:${spacingClass}px"></div>`);
+  const finResult = fin[0] ? getMatchResult(fin[0]) : null;
+  const champion = finResult?.winner;
+
+  // Grupo de bracket: 2 R32 + 1 R16
+  function bracketGroup(r32a, r32b, r16m) {
+    return `<div class="bg">
+      <div class="bg-r32">
+        ${match(r32a)}
+        ${match(r32b)}
+      </div>
+      <div class="bg-connector"><div class="bc-v"></div></div>
+      <div class="bg-r16">${match(r16m, 'r16m')}</div>
+    </div>`;
   }
 
-  // Calcular ganador final
-  const champion = finM?.winner || null;
+  // Par de grupos → 1 QF
+  function bracketPair(grpA, grpB, qfm) {
+    return `<div class="bp">
+      ${grpA}
+      ${grpB}
+      <div class="bp-connector"><div class="bc-v2"></div></div>
+      <div class="bp-qf">${match(qfm, 'qfm')}</div>
+    </div>`;
+  }
+
+  // Mitad del bracket → 1 SF
+  function bracketHalf(pairA, pairB, sfm, side) {
+    return `<div class="bh bh-${side}">
+      ${pairA}
+      ${pairB}
+      <div class="bp-connector"><div class="bc-v3"></div></div>
+      <div class="bsf">${match(sfm, 'sfm')}</div>
+    </div>`;
+  }
+
+  const leftHalf = bracketHalf(
+    bracketPair(
+      bracketGroup(r32[0], r32[1], r16[0]),
+      bracketGroup(r32[2], r32[3], r16[1]),
+      qf[0]
+    ),
+    bracketPair(
+      bracketGroup(r32[4], r32[5], r16[2]),
+      bracketGroup(r32[6], r32[7], r16[3]),
+      qf[1]
+    ),
+    sf[0], 'left'
+  );
+
+  const rightHalf = bracketHalf(
+    bracketPair(
+      bracketGroup(r32[8],  r32[9],  r16[4]),
+      bracketGroup(r32[10], r32[11], r16[5]),
+      qf[2]
+    ),
+    bracketPair(
+      bracketGroup(r32[12], r32[13], r16[6]),
+      bracketGroup(r32[14], r32[15], r16[7]),
+      qf[3]
+    ),
+    sf[1], 'right'
+  );
+
+  const finalHtml = `<div class="bfinal">
+    <div class="bfinal-label">⚽ FINAL</div>
+    <div class="bfinal-date">${fin[0] ? fin[0].pdt + ' · ' + (fin[0].v||'').split(',')[0] : ''}</div>
+    ${fin[0] ? match(fin[0], 'finm') : '<div class="bm finm"><div class="bs tbd">❓</div><div class="bs tbd">❓</div></div>'}
+    ${champion ? `<div class="bchamp">🏆 ${champion}</div>` : ''}
+  </div>`;
 
   el.innerHTML = `
-  <div style="font-size:0.58rem;color:var(--muted);text-align:center;margin-bottom:8px">
-    ✅ Confirmado &nbsp;·&nbsp; 🔮 Proyectado &nbsp;·&nbsp; ❓ Por definir
-  </div>
-  <div style="overflow-x:auto">
-  <div class="bracket-wrap">
-
-    <!-- R32 IZQUIERDA -->
-    <div class="bracket-col r32-l">
-      <div class="round-label">R32</div>
-      ${colHtml(r32L, 4)}
+    <div class="bracket-legend">
+      <span>✅ Clasificado</span><span>🔮 Proyectado</span><span>❓ Por definir</span>
     </div>
-
-    <!-- R16 IZQUIERDA -->
-    <div class="bracket-col r16-l">
-      <div class="round-label">16VOS</div>
-      ${colHtml(r16L, 24)}
-    </div>
-
-    <!-- QF IZQUIERDA -->
-    <div class="bracket-col qf-l">
-      <div class="round-label">4TOS</div>
-      ${colHtml(qfL, 80)}
-    </div>
-
-    <!-- SF IZQUIERDA -->
-    <div class="bracket-col sf-l">
-      <div class="round-label">SEMI</div>
-      ${sfL.length ? matchHtml(sfL[0].home, sfL[0].away, sfL[0].homeScore, sfL[0].awayScore, sfL[0].winner) : '<div class="b-slot tbd">Por definir</div>'}
-    </div>
-
-    <!-- FINAL CENTRO -->
-    <div class="bracket-col final">
-      <div class="final-slot">
-        <div class="final-label">⚽ FINAL</div>
-        <div style="margin:6px 0">
-          ${finM ? matchHtml(finM.home, finM.away, finM.homeScore, finM.awayScore, finM.winner) : '<div class="b-slot tbd">Por definir</div><div class="b-slot tbd">Por definir</div>'}
-        </div>
-        ${champion ? `<div style="text-align:center;margin-top:4px"><div style="font-size:1.4rem">🏆</div><div style="font-size:0.65rem;font-weight:800;color:var(--accent)">${champion}</div></div>` : ''}
-      </div>
-    </div>
-
-    <!-- SF DERECHA -->
-    <div class="bracket-col sf-r">
-      <div class="round-label">SEMI</div>
-      ${sfR.length ? matchHtml(sfR[0].home, sfR[0].away, sfR[0].homeScore, sfR[0].awayScore, sfR[0].winner) : '<div class="b-slot tbd">Por definir</div>'}
-    </div>
-
-    <!-- QF DERECHA -->
-    <div class="bracket-col qf-r">
-      <div class="round-label">4TOS</div>
-      ${colHtml(qfR, 80)}
-    </div>
-
-    <!-- R16 DERECHA -->
-    <div class="bracket-col r16-r">
-      <div class="round-label">16VOS</div>
-      ${colHtml(r16R, 24)}
-    </div>
-
-    <!-- R32 DERECHA -->
-    <div class="bracket-col r32-r">
-      <div class="round-label">R32</div>
-      ${colHtml(r32R, 4)}
-    </div>
-
-  </div>
-  </div>`;
+    <div class="bracket-tree">
+      ${leftHalf}
+      ${finalHtml}
+      ${rightHalf}
+    </div>`;
 }
 
 function openStandings() {
