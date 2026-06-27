@@ -559,6 +559,34 @@ main { padding: 14px 12px; max-width: 680px; margin: 0 auto; }
 }
 .standings-modal.open { display: flex; }
 .standings-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px 0; gap: 8px; flex-shrink: 0;
+}
+.standings-tabs { display: flex; gap: 6px; }
+.standings-tab {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  color: var(--muted); border-radius: 8px; padding: 5px 12px;
+  font-size: 0.7rem; font-weight: 700; cursor: pointer; transition: all .2s;
+}
+.standings-tab.active { background: var(--accent); color: #0a0f1a; border-color: var(--accent); }
+
+/* R32 Simulador */
+.r32-legend { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; font-size: 0.6rem; color: var(--muted); }
+.r32-legend span { display: flex; align-items: center; gap: 3px; }
+.r32-group-block { margin-bottom: 14px; }
+.r32-group-label { font-size: 0.6rem; font-weight: 800; letter-spacing: 1.5px; color: var(--accent); margin-bottom: 5px; }
+.r32-match { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: var(--surface2); border-radius: 8px; margin-bottom: 4px; font-size: 0.7rem; }
+.r32-match-date { font-size: 0.58rem; color: var(--muted); min-width: 70px; }
+.r32-team { flex: 1; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+.r32-team.confirmed { color: var(--accent2); }
+.r32-team.projected { color: var(--text); }
+.r32-team.unknown   { color: var(--muted); font-style: italic; }
+.r32-vs { color: var(--muted); font-size: 0.65rem; font-weight: 700; }
+.r32-badge { font-size: 0.55rem; padding: 1px 4px; border-radius: 3px; margin-left: 2px; }
+.r32-badge.c { background: rgba(76,175,80,0.2); color: #4caf50; }
+.r32-badge.p { background: rgba(232,194,58,0.15); color: var(--accent); }
+.r32-badge.u { background: rgba(255,255,255,0.05); color: var(--muted); }
+.r32-third-note { font-size: 0.6rem; color: var(--muted); margin: 6px 0 10px; padding: 6px 8px; background: rgba(232,194,58,0.07); border-radius: 6px; border-left: 2px solid var(--accent); }
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1092,11 +1120,9 @@ footer {
     <span class="ranking-title">TABLA DE CAMPEONES</span>
   </div>
   <div class="ranking-legend">
-    <span class="legend-item"><span class="legend-badge exact">🎯</span> Marcador exacto = <strong>3 pts</strong></span>
+    <span class="legend-item">🎯 Marcador exacto = <strong>1 ⭐</strong></span>
     <span class="legend-sep">·</span>
-    <span class="legend-item"><span class="legend-badge winner">✅</span> Ganador correcto = <strong>1 pt</strong></span>
-    <span class="legend-sep">·</span>
-    <span class="legend-item"><span class="legend-badge miss">❌</span> Nada = <strong>0 pts</strong></span>
+    <span class="legend-item">Gana quien más estrellas acumule</span>
   </div>
   <div id="rankingBody">
     <div class="ranking-empty">Cargando resultados...</div>
@@ -1128,11 +1154,19 @@ footer {
 <div class="standings-overlay" id="standingsOverlay" onclick="closeStandings()"></div>
 <div class="standings-modal" id="standingsModal">
   <div class="standings-header">
-    <span class="standings-title">📊 Tabla de Posiciones</span>
+    <div class="standings-tabs">
+      <button class="standings-tab active" id="tabGrupos" onclick="switchTab('grupos')">📊 Grupos</button>
+      <button class="standings-tab" id="tabR32" onclick="switchTab('r32')">🔮 R32</button>
+    </div>
     <button class="standings-close" onclick="closeStandings()">✕</button>
   </div>
-  <div class="group-selector" id="groupSelector"></div>
-  <div class="standings-table-wrap" id="standingsTableWrap"></div>
+  <div id="tabContentGrupos">
+    <div class="group-selector" id="groupSelector"></div>
+    <div class="standings-table-wrap" id="standingsTableWrap"></div>
+  </div>
+  <div id="tabContentR32" style="display:none; overflow-y:auto; padding:10px 12px 16px;">
+    <div id="r32Body"></div>
+  </div>
 </div>
 
 <footer>
@@ -1950,66 +1984,50 @@ function renderRanking() {
   const el = document.getElementById('rankingBody');
   if (!el) return;
 
-  // Construir lista ordenada: pts desc, exactos desc, ganadores desc, nombre asc
   const list = Object.entries(nickPoints)
     .map(([k, v]) => ({ ...v, key: k }))
-    .filter(v => v.points > 0)
-    .sort((a, b) =>
-      b.points - a.points ||
-      b.exact  - a.exact  ||
-      b.winner - a.winner ||
-      a.display.localeCompare(b.display)
-    );
+    .filter(v => v.exact > 0)
+    .sort((a, b) => b.exact - a.exact || a.display.localeCompare(b.display));
 
   if (!list.length) {
-    el.innerHTML = '<div class="ranking-empty">Aún no hay resultados calculados</div>';
+    el.innerHTML = '<div class="ranking-empty">Aún nadie ha atinado un marcador exacto ⏳</div>';
     return;
   }
 
   const myNick = normalizeNick(window.__myApodo || '');
-
-  // ── Podio (top 3) ──
   const crowns = ['🥇','🥈','🥉'];
-  const pClasses = ['p1','p2','p3'];
   const top3 = list.slice(0, 3);
 
-  // Reordenar podio: 2do izq, 1ro centro, 3ro derecha
-  const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean);
-  const podiumBars  = top3[1] ? [pClasses[1], pClasses[0], pClasses[2]] : [pClasses[0]];
+  // Podio: 2do izq, 1ro centro, 3ro derecha
+  const podiumOrder  = [top3[1], top3[0], top3[2]].filter(Boolean);
+  const podiumBars   = top3[1] ? ['p2','p1','p3'] : ['p1'];
   const podiumCrowns = top3[1] ? [crowns[1], crowns[0], crowns[2]] : [crowns[0]];
 
   let podiumHtml = '<div class="ranking-podium">';
   podiumOrder.forEach((p, i) => {
-    const origIdx = top3.indexOf(p);
     podiumHtml += `<div class="podium-place">
       <div class="podium-crown">${podiumCrowns[i]}</div>
       <div class="podium-name">${p.display}</div>
-      <div class="podium-pts">${p.points} pts</div>
-      <div class="podium-bar ${podiumBars[i]}">${p.points}</div>
-      <div class="podium-stats">🎯${p.exact} &nbsp; ✅${p.winner}</div>
+      <div class="podium-pts">${'⭐'.repeat(Math.min(p.exact, 10))}</div>
+      <div class="podium-bar ${podiumBars[i]}">${p.exact}</div>
+      <div class="podium-stats">${p.exact} exacto${p.exact !== 1 ? 's' : ''}</div>
     </div>`;
   });
   podiumHtml += '</div>';
 
-  // ── Tabla completa ──
   let tableHtml = `<table class="ranking-table">
     <thead><tr>
       <th class="num">#</th>
       <th>Apodo</th>
-      <th class="num">🎯</th>
-      <th class="num">✅</th>
-      <th class="num">Pts</th>
+      <th class="num">🎯 Exactos</th>
     </tr></thead><tbody>`;
 
   list.forEach((p, i) => {
     const isMe = myNick && p.key === myNick;
-    const posClass = i < 3 ? 'top' : '';
     tableHtml += `<tr class="${isMe ? 'me' : ''}">
-      <td class="num"><span class="ranking-pos ${posClass}">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i+1}</span></td>
+      <td class="num"><span class="ranking-pos ${i < 3 ? 'top' : ''}">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i+1}</span></td>
       <td><span class="ranking-nick">${p.display}${isMe ? '<span class="me-badge">← tú</span>' : ''}</span></td>
-      <td class="exact-col">${p.exact || '—'}</td>
-      <td class="winner-col">${p.winner || '—'}</td>
-      <td class="pts">${p.points}</td>
+      <td class="exact-col">${'⭐'.repeat(Math.min(p.exact, 10))} <span style="color:var(--muted);font-size:0.6rem">(${p.exact})</span></td>
     </tr>`;
   });
 
@@ -2262,6 +2280,167 @@ function restoreNotifPref() {
 const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L'];
 let currentGroup = 'A';
 
+function switchTab(tab) {
+  document.getElementById('tabContentGrupos').style.display = tab === 'grupos' ? '' : 'none';
+  document.getElementById('tabContentR32').style.display    = tab === 'r32'    ? '' : 'none';
+  document.getElementById('tabGrupos').classList.toggle('active', tab === 'grupos');
+  document.getElementById('tabR32').classList.toggle('active', tab === 'r32');
+  if (tab === 'r32') renderR32Simulator();
+}
+
+// ─── SIMULADOR R32 ───────────────────────────────────────────
+// Criterios FIFA para mejores terceros: pts → dif → gf → entre ellos
+function calcBest3rds() {
+  const thirds = [];
+  GROUPS.forEach(g => {
+    const table = calcStandings(g);
+    if (table.length >= 3) {
+      const t = table[2]; // 3ro del grupo
+      const played = MATCHES.filter(m => m.g === g && hasResult(m)).length;
+      const total  = MATCHES.filter(m => m.g === g).length;
+      thirds.push({ ...t, group: g, played, total });
+    }
+  });
+  // Ordenar por: pts → dif → gf → orden FIFA (sorteo)
+  thirds.sort((a, b) =>
+    b.pts - a.pts || b.dif - a.dif || b.gf - a.gf ||
+    GROUPS.indexOf(a.group) - GROUPS.indexOf(b.group)
+  );
+  return thirds; // los primeros 8 clasifican
+}
+
+function hasResult(m) {
+  const key = `${m.d}|${m.h}|${m.a}`;
+  const ls = liveScores[key];
+  return (ls && (ls.state === 'post' || ls.detail === 'FT')) || !!m.score;
+}
+
+function groupFinished(g) {
+  return MATCHES.filter(m => m.g === g).every(m => hasResult(m));
+}
+
+function groupStarted(g) {
+  return MATCHES.filter(m => m.g === g).some(m => hasResult(m));
+}
+
+// Resuelve un slot como "1ro. C" → nombre real del equipo
+function resolveSlot(slot) {
+  const m1 = slot.match(/^1ro\.\s*([A-L])$/);
+  const m2 = slot.match(/^Sub\.\s*([A-L])$/);
+  const m3 = slot.match(/^3ro\.\s*([A-L]+)$/);
+
+  if (m1) {
+    const g = m1[1];
+    const table = calcStandings(g);
+    if (!table.length) return { name: `1ro. ${g}`, status: 'unknown' };
+    const finished = groupFinished(g);
+    const started  = groupStarted(g);
+    return {
+      name: table[0].team,
+      status: finished ? 'confirmed' : started ? 'projected' : 'unknown',
+      group: g, pos: 1
+    };
+  }
+  if (m2) {
+    const g = m2[1];
+    const table = calcStandings(g);
+    if (!table.length) return { name: `2do. ${g}`, status: 'unknown' };
+    const finished = groupFinished(g);
+    const started  = groupStarted(g);
+    return {
+      name: table[1]?.team || `2do. ${g}`,
+      status: finished ? 'confirmed' : started ? 'projected' : 'unknown',
+      group: g, pos: 2
+    };
+  }
+  if (m3) {
+    // Slot de mejor tercero entre grupos: ej "3ro. ABCDF"
+    const groups   = m3[1].split('');
+    const best3rds = calcBest3rds();
+    const top8     = best3rds.slice(0, 8);
+    // Ver si alguno de los 8 mejores terceros viene de alguno de los grupos listados
+    const match    = top8.find(t => groups.includes(t.group));
+    const allDone  = groups.every(g => groupFinished(g));
+    const anyDone  = groups.some(g => groupStarted(g));
+    return {
+      name: match ? match.team : `3ro. ${m3[1]}`,
+      status: allDone ? 'confirmed' : anyDone ? 'projected' : 'unknown',
+      group: match?.group, pos: 3
+    };
+  }
+  return { name: slot, status: 'unknown' };
+}
+
+function renderR32Simulator() {
+  const el = document.getElementById('r32Body');
+  if (!el) return;
+
+  const r32Matches = MATCHES.filter(m => m.s === 'R32');
+  if (!r32Matches.length) {
+    el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:0.75rem">No hay partidos R32 definidos</div>';
+    return;
+  }
+
+  const best3rds = calcBest3rds();
+  const top8Groups = best3rds.slice(0, 8).map(t => t.group);
+
+  let html = `<div class="r32-legend">
+    <span>✅ <strong style="color:#4caf50">Confirmado</strong></span>
+    <span>🔮 <strong style="color:var(--accent)">Proyectado</strong></span>
+    <span>❓ <strong style="color:var(--muted)">Por definir</strong></span>
+  </div>
+  <div class="r32-third-note">
+    ℹ️ Los mejores 8 terceros de los 12 grupos también clasifican a R32 según criterios FIFA (pts → dif. goles → goles a favor).
+  </div>`;
+
+  // Agrupar por fecha
+  const byDate = {};
+  r32Matches.forEach(m => {
+    const d = m.localDate || m.d;
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push(m);
+  });
+
+  Object.entries(byDate).sort(([a],[b]) => a.localeCompare(b)).forEach(([date, matches]) => {
+    const label = new Date(date + 'T12:00:00').toLocaleDateString([], { weekday:'short', month:'short', day:'numeric' });
+    html += `<div class="r32-group-block"><div class="r32-group-label">${label.toUpperCase()}</div>`;
+
+    matches.forEach(m => {
+      const home = resolveSlot(m.h);
+      const away = resolveSlot(m.a);
+
+      const teamHtml = (t) => {
+        const badge = t.status === 'confirmed' ? '<span class="r32-badge c">✅</span>'
+                    : t.status === 'projected'  ? '<span class="r32-badge p">🔮</span>'
+                    : '<span class="r32-badge u">❓</span>';
+        return `<span class="r32-team ${t.status}">${t.name}${badge}</span>`;
+      };
+
+      html += `<div class="r32-match">
+        <span class="r32-match-date">${m.pdt} · ${(m.v||'').split(',')[0]}</span>
+        ${teamHtml(home)}
+        <span class="r32-vs">vs</span>
+        ${teamHtml(away)}
+      </div>`;
+    });
+
+    html += `</div>`;
+  });
+
+  // Tabla de mejores terceros actual
+  html += `<div class="r32-group-label" style="margin-top:12px">MEJORES TERCEROS (top 8 clasifican)</div>`;
+  html += `<table class="standings-table" style="width:100%">
+    <thead><tr><th>#</th><th>Equipo</th><th>Gr</th><th>Pts</th><th>DG</th><th>GF</th></tr></thead><tbody>`;
+  best3rds.forEach((t, i) => {
+    const cls = i < 8 ? 'qualified' : '';
+    const icon = i < 8 ? '✅' : '—';
+    html += `<tr class="${cls}"><td>${icon}</td><td>${t.team}</td><td>${t.group}</td><td>${t.pts}</td><td>${t.dif > 0 ? '+' : ''}${t.dif}</td><td>${t.gf}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+
+  el.innerHTML = html;
+}
+
 function openStandings() {
   renderGroupSelector();
   renderStandings(currentGroup);
@@ -2414,15 +2593,12 @@ function updateNickStars(votes) {
   votes.predictions.forEach(p => {
     if (!p.result || p.result === '') return;
     const k = normalizeNick(p.apodo);
-    const display = p.apodo; // preservar capitalización original
+    const display = p.apodo;
     if (!nickPoints[k]) nickPoints[k] = { exact: 0, winner: 0, points: 0, display };
     if (p.result === 'exact') {
       nickStars[k]  = (nickStars[k] || 0) + 1;
       nickPoints[k].exact  += 1;
-      nickPoints[k].points += 3;
-    } else if (p.result === 'winner') {
-      nickPoints[k].winner  += 1;
-      nickPoints[k].points  += 1;
+      nickPoints[k].points += 1; // 1 punto = 1 estrella por marcador exacto
     }
   });
   renderRanking();
