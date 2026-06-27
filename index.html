@@ -2295,18 +2295,23 @@ function calcBest3rds() {
   GROUPS.forEach(g => {
     const table = calcStandings(g);
     if (table.length >= 3) {
-      const t = table[2]; // 3ro del grupo
-      const played = MATCHES.filter(m => m.g === g && hasResult(m)).length;
-      const total  = MATCHES.filter(m => m.g === g).length;
-      thirds.push({ ...t, group: g, played, total });
+      const t = table[2];
+      const gMatches = MATCHES.filter(m => m.g === g);
+      const played = gMatches.filter(m => hasResult(m)).length;
+      const total  = gMatches.length;
+      const fp     = getFairPlay(t.team, gMatches);
+      thirds.push({ ...t, group: g, played, total, fp });
     }
   });
-  // Ordenar por: pts → dif → gf → orden FIFA (sorteo)
+  // Criterios FIFA para mejores terceros: pts → dif → gf → fair play → ranking FIFA
   thirds.sort((a, b) =>
-    b.pts - a.pts || b.dif - a.dif || b.gf - a.gf ||
-    GROUPS.indexOf(a.group) - GROUPS.indexOf(b.group)
+    b.pts - a.pts ||
+    b.dif - a.dif ||
+    b.gf  - a.gf  ||
+    b.fp  - a.fp  ||  // mayor (menos tarjetas) es mejor
+    getFifaRank(a.team) - getFifaRank(b.team)
   );
-  return thirds; // los primeros 8 clasifican
+  return thirds;
 }
 
 function hasResult(m) {
@@ -2483,6 +2488,48 @@ const FIFA_DRAW_ORDER = {
   'L': ['Inglaterra','Panamá','Croacia','Ghana']
 };
 
+// Ranking FIFA al momento del sorteo (diciembre 2025) — desempate final
+const FIFA_RANKING = {
+  'Francia':1,'Brasil':2,'Argentina':3,'Inglaterra':4,'España':5,
+  'Portugal':6,'Países Bajos':7,'Alemania':8,'Bélgica':9,'Uruguay':10,
+  'Croacia':11,'Suiza':12,'Colombia':13,'Marruecos':14,'EUA':15,
+  'México':16,'Japón':17,'Senegal':18,'Irán':19,'Australia':20,
+  'Corea del Sur':21,'Ecuador':22,'Qatar':23,'Túnez':24,'Perú':25,
+  'Noruega':26,'Suecia':27,'Turquía':28,'Ucrania':29,'Costa de Marfil':30,
+  'Austria':31,'Ghana':32,'Chequia':33,'Hungría':34,'Escocia':35,
+  'Eslovenia':36,'Eslovaquia':37,'Rumania':38,'Serbia':39,'Paraguay':40,
+  'Bolivia':41,'Venezuela':42,'Arabia Saudita':43,'Irak':44,'Canadá':45,
+  'Nueva Zelanda':46,'Argelia':47,'Uzbekistán':48,'Haití':49,
+  'Sudáfrica':50,'Bosnia-Herzegovina':51,'Honduras':52,'Cabo Verde':53,
+  'Panamá':54,'Albania':55,'Curazao':56,'Jamaica':57,'Costa Rica':58,
+  'El Salvador':59,'Jordania':60,'Rep. Dem. Congo':61,'Tanzania':62,
+  'Guinea':63,'Egipto':64,'Burkina Faso':65,'Mali':66,'Camerún':67,
+  'Angola':68,'Benín':69,'Comoras':70,'Indonesia':71,'Filipinas':72
+};
+
+function getFifaRank(team) {
+  return FIFA_RANKING[team] || 999;
+}
+
+// Fair play score: amarilla=-1, roja directa=-3, amarilla+roja=-3
+// Usamos cards del liveScores si están disponibles
+function getFairPlay(team, groupMatches) {
+  let score = 0;
+  groupMatches.forEach(m => {
+    if (m.h !== team && m.a !== team) return;
+    const key = `${m.d}|${m.h}|${m.a}`;
+    const ls  = liveScores[key];
+    const cards = (ls && ls.cards) || (m.cards) || [];
+    cards.forEach(c => {
+      if (c.team !== team) return;
+      if (c.type === 'yellow')     score -= 1;
+      if (c.type === 'red')        score -= 3;
+      if (c.type === 'yellow-red') score -= 3;
+    });
+  });
+  return score; // mayor (menos negativo) es mejor
+}
+
 function calcStandings(group) {
   const groupMatches = MATCHES.filter(m => m.g === group);
   const teams = [...new Set(groupMatches.flatMap(m => [m.h, m.a]))];
@@ -2496,44 +2543,97 @@ function calcStandings(group) {
     const key = `${m.d}|${m.h}|${m.a}`;
     const ls  = liveScores[key];
     let sh = null, sa = null;
-
     if (ls && (ls.state === 'post' || ls.detail === 'FT' || ls.detail === 'Final')) {
       sh = ls.h; sa = ls.a;
     } else if (m.score) {
       sh = m.score.h; sa = m.score.a;
     }
-
     if (sh === null || sa === null) return;
 
-    const home = stats[m.h];
-    const away = stats[m.a];
+    const home = stats[m.h], away = stats[m.a];
     home.pj++; away.pj++;
     home.gf += sh; home.gc += sa;
     away.gf += sa; away.gc += sh;
-
-    if (sh > sa) {
-      home.g++; home.pts += 3; away.p++;
-    } else if (sh === sa) {
-      home.e++; home.pts++; away.e++; away.pts++;
-    } else {
-      away.g++; away.pts += 3; home.p++;
-    }
+    if (sh > sa)      { home.g++; home.pts += 3; away.p++; }
+    else if (sh === sa){ home.e++; home.pts++; away.e++; away.pts++; }
+    else               { away.g++; away.pts += 3; home.p++; }
     home.dif = home.gf - home.gc;
     away.dif = away.gf - away.gc;
   });
 
-  const drawOrder = FIFA_DRAW_ORDER[group] || [];
+  const table = Object.values(stats);
 
-  return Object.values(stats).sort((a, b) => {
-    // 1. Puntos
+  // Función de enfrentamiento directo entre un subconjunto de equipos
+  function headToHead(tied) {
+    const h2h = {};
+    tied.forEach(t => { h2h[t.team] = { pts: 0, dif: 0, gf: 0 }; });
+    groupMatches.forEach(m => {
+      const key = `${m.d}|${m.h}|${m.a}`;
+      const ls  = liveScores[key];
+      let sh = null, sa = null;
+      if (ls && (ls.state === 'post' || ls.detail === 'FT')) { sh = ls.h; sa = ls.a; }
+      else if (m.score) { sh = m.score.h; sa = m.score.a; }
+      if (sh === null || !h2h[m.h] || !h2h[m.a]) return;
+      h2h[m.h].gf  += sh; h2h[m.h].dif += sh - sa;
+      h2h[m.a].gf  += sa; h2h[m.a].dif += sa - sh;
+      if (sh > sa)       { h2h[m.h].pts += 3; }
+      else if (sh === sa){ h2h[m.h].pts++; h2h[m.a].pts++; }
+      else               { h2h[m.a].pts += 3; }
+    });
+    return h2h;
+  }
+
+  // Comparador FIFA 2026 completo (7 criterios)
+  function fifaCompare(a, b) {
+    // Primero comparar por puntos generales
     if (b.pts !== a.pts) return b.pts - a.pts;
-    // 2. Diferencia de goles
-    if (b.dif !== a.dif) return b.dif - a.dif;
-    // 3. Goles a favor
-    if (b.gf !== a.gf) return b.gf - a.gf;
-    // 4. Orden del sorteo FIFA (criterio final)
-    return drawOrder.indexOf(a.team) - drawOrder.indexOf(b.team);
-  });
+    // Empate en puntos → enfrentamiento directo (solo si jugaron entre ellos)
+    return 0; // se resuelve abajo con sortGroups
+  }
+
+  // Ordenamiento con desempate correcto incluyendo H2H
+  function sortGroup(teams) {
+    if (teams.length <= 1) return teams;
+
+    // Ordenar por puntos primero
+    teams.sort((a, b) => b.pts - a.pts);
+
+    // Agrupar empatados en puntos y resolver H2H dentro de cada grupo
+    const result = [];
+    let i = 0;
+    while (i < teams.length) {
+      let j = i + 1;
+      while (j < teams.length && teams[j].pts === teams[i].pts) j++;
+      const tied = teams.slice(i, j);
+      if (tied.length === 1) { result.push(tied[0]); i = j; continue; }
+
+      const h2h = headToHead(tied);
+      tied.sort((a, b) => {
+        const ha = h2h[a.team], hb = h2h[b.team];
+        // 1. Pts H2H
+        if (hb.pts !== ha.pts) return hb.pts - ha.pts;
+        // 2. Dif H2H
+        if (hb.dif !== ha.dif) return hb.dif - ha.dif;
+        // 3. GF H2H
+        if (hb.gf !== ha.gf)  return hb.gf - ha.gf;
+        // 4. Dif general
+        if (b.dif !== a.dif)  return b.dif - a.dif;
+        // 5. GF general
+        if (b.gf !== a.gf)    return b.gf - a.gf;
+        // 6. Fair play
+        const fpa = getFairPlay(a.team, groupMatches);
+        const fpb = getFairPlay(b.team, groupMatches);
+        if (fpb !== fpa) return fpb - fpa; // mayor (menos tarjetas) es mejor
+        // 7. Ranking FIFA
+        return getFifaRank(a.team) - getFifaRank(b.team);
+      });
+      result.push(...tied);
+      i = j;
+    }
+    return result;
+  }
+
+  return sortGroup(table);
 }
 
 function renderStandings(group) {
