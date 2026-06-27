@@ -531,6 +531,90 @@ main { padding: 14px 12px; max-width: 680px; margin: 0 auto; }
   line-height: 1;
 }
 .standings-btn:hover { border-color: var(--accent); background: var(--surface2); }
+.bracket-btn { border-color: rgba(232,194,58,0.3); }
+
+/* ── BRACKET MODAL ───────────────────────────── */
+.bracket-modal { max-width: 98vw; width: 780px; max-height: 88vh; }
+
+.bracket-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 700px;
+}
+
+/* Columnas del bracket */
+.bracket-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 0;
+}
+.bracket-col.r32-l  { width: 110px; }
+.bracket-col.r16-l  { width: 90px; }
+.bracket-col.qf-l   { width: 80px; }
+.bracket-col.sf-l   { width: 72px; }
+.bracket-col.final  { width: 90px; flex-shrink:0; }
+.bracket-col.sf-r   { width: 72px; }
+.bracket-col.qf-r   { width: 80px; }
+.bracket-col.r16-r  { width: 90px; }
+.bracket-col.r32-r  { width: 110px; }
+
+/* Labels de ronda */
+.round-label {
+  font-size: 0.52rem; font-weight: 800; letter-spacing: 1.2px;
+  color: var(--accent); text-align: center;
+  padding: 0 0 6px; white-space: nowrap;
+}
+
+/* Slot de equipo */
+.b-slot {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 5px; border-radius: 5px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  font-size: 0.62rem; font-weight: 600; color: var(--text);
+  min-height: 26px; margin: 1px 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: border-color .2s;
+  position: relative;
+}
+.b-slot.confirmed { border-color: rgba(76,175,80,0.5); }
+.b-slot.projected { border-color: rgba(232,194,58,0.4); }
+.b-slot.winner    { border-color: var(--accent); background: rgba(232,194,58,0.1); color: var(--accent); }
+.b-slot.tbd       { color: var(--muted); font-style: italic; font-size: 0.55rem; }
+.b-slot .b-flag   { font-size: 0.85rem; flex-shrink: 0; }
+.b-slot .b-name   { overflow: hidden; text-overflow: ellipsis; }
+.b-slot .b-score  { margin-left: auto; font-size: 0.6rem; color: var(--accent); font-weight: 800; flex-shrink:0; }
+
+/* Par de equipos en un enfrentamiento */
+.b-match {
+  display: flex; flex-direction: column;
+  position: relative;
+}
+.b-match::after {
+  content: ''; position: absolute;
+  right: -1px; top: 25%; height: 50%;
+  border-right: 1px solid rgba(232,194,58,0.25);
+}
+.bracket-col.r32-r .b-match::after,
+.bracket-col.r16-r .b-match::after,
+.bracket-col.qf-r  .b-match::after,
+.bracket-col.sf-r  .b-match::after {
+  right: auto; left: -1px;
+  border-right: none; border-left: 1px solid rgba(232,194,58,0.25);
+}
+
+/* Columna central final */
+.final-slot {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 4px; padding: 8px 4px;
+}
+.final-label { font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; color: var(--accent); text-align: center; }
+.trophy-icon { font-size: 2rem; line-height: 1; }
+
+/* Conectores horizontales */
+.b-connector { width: 8px; border-top: 1px solid rgba(232,194,58,0.2); align-self: center; flex-shrink:0; }
 
 /* ── STANDINGS MODAL ─────────────────────────── */
 .standings-overlay {
@@ -1108,6 +1192,7 @@ footer {
   </div>
   <div id="filterActivePill" style="display:none"></div>
   <button class="standings-btn" onclick="openStandings()" title="Tabla de posiciones">📊</button>
+  <button class="standings-btn bracket-btn" onclick="openBracket()" title="Bracket del torneo">🏆</button>
 </div>
 <div class="date-bar" id="dateBar"></div>
 
@@ -1151,6 +1236,15 @@ footer {
 </section>
 
 <!-- ── STANDINGS MODAL ── -->
+<div class="standings-overlay" id="bracketOverlay" onclick="closeBracket()"></div>
+<div class="standings-modal bracket-modal" id="bracketModal">
+  <div class="standings-header">
+    <span class="standings-title">🏆 BRACKET · Mundial 2026</span>
+    <button class="standings-close" onclick="closeBracket()">✕</button>
+  </div>
+  <div id="bracketBody" style="overflow-y:auto;overflow-x:auto;padding:12px 8px 20px;"></div>
+</div>
+
 <div class="standings-overlay" id="standingsOverlay" onclick="closeStandings()"></div>
 <div class="standings-modal" id="standingsModal">
   <div class="standings-header">
@@ -2444,6 +2538,175 @@ function renderR32Simulator() {
   html += `</tbody></table>`;
 
   el.innerHTML = html;
+}
+
+// ─── BRACKET ─────────────────────────────────────────────────
+function openBracket() {
+  renderBracket();
+  document.getElementById('bracketOverlay').classList.add('open');
+  document.getElementById('bracketModal').classList.add('open');
+}
+function closeBracket() {
+  document.getElementById('bracketOverlay').classList.remove('open');
+  document.getElementById('bracketModal').classList.remove('open');
+}
+
+// Obtiene flag emoji del equipo
+function teamFlag(name) {
+  const code = FLAG_CODES[name];
+  if (!code) return '🏳️';
+  // Convertir código de país a emoji bandera
+  return code.split('').map(c => String.fromCodePoint(c.charCodeAt(0) - 97 + 127462)).join('');
+}
+
+// Slot visual de un equipo en el bracket
+function bSlot(team, status, scoreStr) {
+  if (!team || team.startsWith('Por') || team.includes('Por definir')) {
+    return `<div class="b-slot tbd">Por definir</div>`;
+  }
+  const flag = teamFlag(team);
+  const cls = status === 'winner' ? 'winner' : status === 'confirmed' ? 'confirmed' : status === 'projected' ? 'projected' : '';
+  const score = scoreStr ? `<span class="b-score">${scoreStr}</span>` : '';
+  return `<div class="b-slot ${cls}"><span class="b-flag">${flag}</span><span class="b-name">${team}</span>${score}</div>`;
+}
+
+// Resuelve quién clasifica de los R32/R16/etc usando liveScores
+function resolveKOMatch(m) {
+  const key = `${m.d}|${m.h}|${m.a}`;
+  const ls = liveScores[key];
+  let home = resolveSlot(m.h).name;
+  let away = resolveSlot(m.a).name;
+  let homeScore = null, awayScore = null, winner = null;
+
+  if (ls && (ls.state === 'post' || ls.detail === 'FT')) {
+    homeScore = ls.h; awayScore = ls.a;
+    winner = homeScore > awayScore ? home : awayScore > homeScore ? away : null;
+  } else if (m.score) {
+    homeScore = m.score.h; awayScore = m.score.a;
+    winner = homeScore > m.score.a ? home : m.score.a > homeScore ? away : null;
+  }
+  return { home, away, homeScore, awayScore, winner };
+}
+
+function renderBracket() {
+  const el = document.getElementById('bracketBody');
+  if (!el) return;
+
+  // Obtener todos los partidos por stage
+  const r32 = MATCHES.filter(m => m.s === 'R32');
+  const r16 = MATCHES.filter(m => m.s === 'R16');
+  const qf  = MATCHES.filter(m => m.s === 'QF');
+  const sf  = MATCHES.filter(m => m.s === 'SF');
+  const fin = MATCHES.filter(m => m.s === 'F');
+
+  // Resolver cada partido
+  const r32data = r32.map(m => resolveKOMatch(m));
+  const r16data = r16.map(m => ({ ...resolveKOMatch(m), orig: m }));
+  const qfdata  = qf.map(m  => ({ ...resolveKOMatch(m), orig: m }));
+  const sfdata  = sf.map(m  => ({ ...resolveKOMatch(m), orig: m }));
+  const findata = fin.map(m => ({ ...resolveKOMatch(m), orig: m }));
+
+  // Función para renderizar un match (dos slots)
+  function matchHtml(home, away, homeScore, awayScore, winner) {
+    const hWin = winner === home;
+    const aWin = winner === away;
+    const hScore = homeScore !== null ? homeScore : '';
+    const aScore = awayScore !== null ? awayScore : '';
+    const hStatus = hWin ? 'winner' : (home && !home.startsWith('Por')) ? 'confirmed' : '';
+    const aStatus = aWin ? 'winner' : (away && !away.startsWith('Por')) ? 'confirmed' : '';
+    return `<div class="b-match">
+      ${bSlot(home, hStatus, hScore !== '' ? `${hScore}` : '')}
+      ${bSlot(away, aStatus, aScore !== '' ? `${aScore}` : '')}
+    </div>`;
+  }
+
+  // Dividir R32 en 8 izq y 8 der (bracket oficial)
+  // Partidos 1-8 izquierda, 9-16 derecha
+  const r32L = r32data.slice(0, 8);
+  const r32R = r32data.slice(8, 16);
+  const r16L = r16data.slice(0, 4);
+  const r16R = r16data.slice(4, 8);
+  const qfL  = qfdata.slice(0, 2);
+  const qfR  = qfdata.slice(2, 4);
+  const sfL  = sfdata.slice(0, 1);
+  const sfR  = sfdata.slice(1, 2);
+  const finM = findata[0];
+
+  function colHtml(matches, spacingClass) {
+    return matches.map(m => matchHtml(m.home, m.away, m.homeScore, m.awayScore, m.winner)).join(`<div style="height:${spacingClass}px"></div>`);
+  }
+
+  // Calcular ganador final
+  const champion = finM?.winner || null;
+
+  el.innerHTML = `
+  <div style="font-size:0.58rem;color:var(--muted);text-align:center;margin-bottom:8px">
+    ✅ Confirmado &nbsp;·&nbsp; 🔮 Proyectado &nbsp;·&nbsp; ❓ Por definir
+  </div>
+  <div style="overflow-x:auto">
+  <div class="bracket-wrap">
+
+    <!-- R32 IZQUIERDA -->
+    <div class="bracket-col r32-l">
+      <div class="round-label">R32</div>
+      ${colHtml(r32L, 4)}
+    </div>
+
+    <!-- R16 IZQUIERDA -->
+    <div class="bracket-col r16-l">
+      <div class="round-label">16VOS</div>
+      ${colHtml(r16L, 24)}
+    </div>
+
+    <!-- QF IZQUIERDA -->
+    <div class="bracket-col qf-l">
+      <div class="round-label">4TOS</div>
+      ${colHtml(qfL, 80)}
+    </div>
+
+    <!-- SF IZQUIERDA -->
+    <div class="bracket-col sf-l">
+      <div class="round-label">SEMI</div>
+      ${sfL.length ? matchHtml(sfL[0].home, sfL[0].away, sfL[0].homeScore, sfL[0].awayScore, sfL[0].winner) : '<div class="b-slot tbd">Por definir</div>'}
+    </div>
+
+    <!-- FINAL CENTRO -->
+    <div class="bracket-col final">
+      <div class="final-slot">
+        <div class="final-label">⚽ FINAL</div>
+        <div style="margin:6px 0">
+          ${finM ? matchHtml(finM.home, finM.away, finM.homeScore, finM.awayScore, finM.winner) : '<div class="b-slot tbd">Por definir</div><div class="b-slot tbd">Por definir</div>'}
+        </div>
+        ${champion ? `<div style="text-align:center;margin-top:4px"><div style="font-size:1.4rem">🏆</div><div style="font-size:0.65rem;font-weight:800;color:var(--accent)">${champion}</div></div>` : ''}
+      </div>
+    </div>
+
+    <!-- SF DERECHA -->
+    <div class="bracket-col sf-r">
+      <div class="round-label">SEMI</div>
+      ${sfR.length ? matchHtml(sfR[0].home, sfR[0].away, sfR[0].homeScore, sfR[0].awayScore, sfR[0].winner) : '<div class="b-slot tbd">Por definir</div>'}
+    </div>
+
+    <!-- QF DERECHA -->
+    <div class="bracket-col qf-r">
+      <div class="round-label">4TOS</div>
+      ${colHtml(qfR, 80)}
+    </div>
+
+    <!-- R16 DERECHA -->
+    <div class="bracket-col r16-r">
+      <div class="round-label">16VOS</div>
+      ${colHtml(r16R, 24)}
+    </div>
+
+    <!-- R32 DERECHA -->
+    <div class="bracket-col r32-r">
+      <div class="round-label">R32</div>
+      ${colHtml(r32R, 4)}
+    </div>
+
+  </div>
+  </div>`;
 }
 
 function openStandings() {
