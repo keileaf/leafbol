@@ -1613,6 +1613,10 @@ function renderMatches() {
     const upcoming  = isUpcoming(m);
     const isFinal   = m.s === 'Final';
 
+    // Resolver nombres de eliminatorias
+    const displayH = resolveTeamName(m.h);
+    const displayA = resolveTeamName(m.a);
+
     // Estado del partido
     let statusBadge = '';
     if (finished) {
@@ -1650,13 +1654,13 @@ function renderMatches() {
       </div>
       <div class="match-body">
         <div class="team">
-          ${flagImg(m.h)}
-          <div class="team-name">${m.h}</div>
+          ${flagImg(displayH)}
+          <div class="team-name">${displayH.startsWith('W') ? '<span style="color:var(--muted);font-size:0.7rem">Por definir</span>' : displayH}</div>
         </div>
         <div class="match-center">${center}</div>
         <div class="team away">
-          ${flagImg(m.a)}
-          <div class="team-name">${m.a}</div>
+          ${flagImg(displayA)}
+          <div class="team-name">${displayA.startsWith('W') ? '<span style="color:var(--muted);font-size:0.7rem">Por definir</span>' : displayA}</div>
         </div>
       </div>
     </div>`;
@@ -1923,6 +1927,11 @@ function renderMatches() {
     const isFinal   = m.s === 'Final';
     const isMyTeam  = teamFilter && (m.h === teamFilter || m.a === teamFilter);
 
+    // Resolver nombres de eliminatorias (W73 → nombre real)
+    const displayH = resolveTeamName(m.h);
+    const displayA = resolveTeamName(m.a);
+    const isPending = displayH.startsWith('W') || displayA.startsWith('W');
+
     let statusBadge = '';
     const liveScore = liveScores[`${m.d}|${m.h}|${m.a}`];
     const hasScore  = liveScore || (finished && m.score);
@@ -1994,13 +2003,13 @@ function renderMatches() {
       </div>
       <div class="match-body">
         <div class="team">
-          ${flagImg(m.h)}
-          <div class="team-name">${m.h}</div>
+          ${flagImg(displayH)}
+          <div class="team-name">${displayH.startsWith('W') ? '<span style="color:var(--muted);font-size:0.7rem">Por definir</span>' : displayH}</div>
         </div>
         <div class="match-center">${center}</div>
         <div class="team away">
-          ${flagImg(m.a)}
-          <div class="team-name">${m.a}</div>
+          ${flagImg(displayA)}
+          <div class="team-name">${displayA.startsWith('W') ? '<span style="color:var(--muted);font-size:0.7rem">Por definir</span>' : displayA}</div>
         </div>
       </div>
       ${detailsHtml}
@@ -2077,7 +2086,51 @@ function renderRanking() {
   el.innerHTML = podiumHtml + tableHtml;
 }
 
-// ─── API DE RESULTADOS ───────────────────────────────────────
+// ─── RESOLVER NOMBRES DE ELIMINATORIAS ──────────────────────
+// Convierte "W73" → nombre real del ganador, o devuelve el slot original
+function resolveTeamName(slot) {
+  if (!slot) return slot;
+  const wm = slot.match(/^W(\d+)$/);
+  if (!wm) return slot; // no es un código W##, devolver tal cual
+
+  const n = parseInt(wm[1]);
+  // Buscar el partido correspondiente por índice
+  // R32: partidos 73-88 (índices 0-15)
+  // R16: partidos 89-96 (índices 0-7)
+  // QF:  partidos 97-100 (índices 0-3)
+  // SF:  partidos 101-102
+  const r32 = MATCHES.filter(m => m.s === 'R32');
+  const r16 = MATCHES.filter(m => m.s === 'R16');
+  const qf  = MATCHES.filter(m => m.s === 'QF');
+  const sf  = MATCHES.filter(m => m.s === 'SF');
+
+  let srcMatch = null;
+  if (n >= 73 && n <= 88)   srcMatch = r32[n - 73];
+  else if (n >= 89 && n <= 96) srcMatch = r16[n - 89];
+  else if (n >= 97 && n <= 100) srcMatch = qf[n - 97];
+  else if (n >= 101 && n <= 102) srcMatch = sf[n - 101];
+
+  if (!srcMatch) return slot;
+
+  // Resolver recursivamente los equipos del partido fuente
+  const srcH = resolveTeamName(srcMatch.h);
+  const srcA = resolveTeamName(srcMatch.a);
+
+  // Ver si ese partido ya tiene resultado
+  const key = `${srcMatch.d}|${srcMatch.h}|${srcMatch.a}`;
+  const ls = liveScores[key];
+  let hScore = null, aScore = null;
+  if (ls && (ls.state === 'post' || ls.detail === 'FT')) {
+    hScore = ls.h; aScore = ls.a;
+  } else if (srcMatch.score) {
+    hScore = srcMatch.score.h; aScore = srcMatch.score.a;
+  }
+
+  if (hScore !== null && aScore !== null) {
+    return hScore > aScore ? srcH : aScore > hScore ? srcA : slot; // empate = pendiente (va a penales)
+  }
+  return slot; // partido no terminado, mantener código
+}
 // El proxy está en Apps Script (mundial2026_visitors.gs)
 // que llama a football-data.org server-side sin problema de CORS.
 // Solo necesitas que WEBAPP_URL esté configurada abajo.
