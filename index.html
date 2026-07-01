@@ -1412,13 +1412,13 @@ const RAW = [
   {d:'2026-06-27',g:'J',h:'Argelia',      a:'Austria',            hf:'🇩🇿',af:'🇦🇹',et:'10:00 PM',v:'Arrowhead, Kansas City', score:{h:3,a:3}},
   {d:'2026-06-27',g:'J',h:'Jordania',     a:'Argentina',          hf:'🇯🇴',af:'🇦🇷',et:'10:00 PM',v:'AT&T, Arlington',         score:{h:1,a:3}},
   // ── RONDA DE 32 (Jun 28 - Jul 3) ───────────────────────────
-  {d:'2026-06-28',s:'R32',h:'Sudáfrica',        a:'Canadá',             hf:'🇿🇦',af:'🇨🇦',et:'3:00 PM', v:'SoFi, Inglewood'},
-  {d:'2026-06-29',s:'R32',h:'Brasil',            a:'Japón',              hf:'🇧🇷',af:'🇯🇵',et:'1:00 PM', v:'NRG, Houston'},
-  {d:'2026-06-29',s:'R32',h:'Alemania',          a:'Paraguay',           hf:'🇩🇪',af:'🇵🇾',et:'4:30 PM', v:'Gillette, Foxborough'},
-  {d:'2026-06-29',s:'R32',h:'Países Bajos',      a:'Marruecos',          hf:'🇳🇱',af:'🇲🇦',et:'9:00 PM', v:'BBVA, Monterrey'},
-  {d:'2026-06-30',s:'R32',h:'Costa de Marfil',   a:'Noruega',            hf:'🇨🇮',af:'🇳🇴',et:'1:00 PM', v:'AT&T, Arlington'},
-  {d:'2026-06-30',s:'R32',h:'Francia',           a:'Suecia',             hf:'🇫🇷',af:'🇸🇪',et:'5:00 PM', v:'MetLife, NJ'},
-  {d:'2026-06-30',s:'R32',h:'México',            a:'Ecuador',            hf:'🇲🇽',af:'🇪🇨',et:'9:00 PM', v:'Azteca, CDMX'},
+  {d:'2026-06-28',s:'R32',h:'Sudáfrica',        a:'Canadá',             hf:'🇿🇦',af:'🇨🇦',et:'3:00 PM', v:'SoFi, Inglewood', score:{h:0,a:1}},
+  {d:'2026-06-29',s:'R32',h:'Brasil',            a:'Japón',              hf:'🇧🇷',af:'🇯🇵',et:'1:00 PM', v:'NRG, Houston', score:{h:2,a:1}},
+  {d:'2026-06-29',s:'R32',h:'Alemania',          a:'Paraguay',           hf:'🇩🇪',af:'🇵🇾',et:'4:30 PM', v:'Gillette, Foxborough', score:{h:1,a:1}, pen:{h:3,a:4,w:'Paraguay'}},
+  {d:'2026-06-29',s:'R32',h:'Países Bajos',      a:'Marruecos',          hf:'🇳🇱',af:'🇲🇦',et:'9:00 PM', v:'BBVA, Monterrey', score:{h:1,a:1}, pen:{h:2,a:3,w:'Marruecos'}},
+  {d:'2026-06-30',s:'R32',h:'Costa de Marfil',   a:'Noruega',            hf:'🇨🇮',af:'🇳🇴',et:'1:00 PM', v:'AT&T, Arlington', score:{h:1,a:2}},
+  {d:'2026-06-30',s:'R32',h:'Francia',           a:'Suecia',             hf:'🇫🇷',af:'🇸🇪',et:'5:00 PM', v:'MetLife, NJ', score:{h:3,a:0}},
+  {d:'2026-06-30',s:'R32',h:'México',            a:'Ecuador',            hf:'🇲🇽',af:'🇪🇨',et:'9:00 PM', v:'Azteca, CDMX', score:{h:2,a:0}},
   {d:'2026-07-01',s:'R32',h:'Inglaterra',        a:'Rep. Dem. Congo',    hf:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',af:'🇨🇩',et:'12:00 PM',v:'Mercedes-Benz, Atlanta'},
   {d:'2026-07-01',s:'R32',h:'EUA',               a:'Bosnia-Herzegovina', hf:'🇺🇸',af:'🇧🇦',et:'4:00 PM', v:"Levi's, Santa Clara"},
   {d:'2026-07-01',s:'R32',h:'Bélgica',           a:'Senegal',            hf:'🇧🇪',af:'🇸🇳',et:'8:00 PM', v:'Lumen Field, Seattle'},
@@ -2131,7 +2131,14 @@ function resolveTeamName(slot) {
   }
 
   if (hScore !== null && aScore !== null) {
-    return hScore > aScore ? srcH : aScore > hScore ? srcA : slot; // empate = pendiente (va a penales)
+    if (hScore === aScore) {
+      // empate en tiempo regular: revisar si hay definición por penales
+      if (srcMatch.pen && srcMatch.pen.w) {
+        return srcMatch.pen.w === srcMatch.h ? srcH : srcMatch.pen.w === srcMatch.a ? srcA : slot;
+      }
+      return slot; // aún no definido por penales
+    }
+    return hScore > aScore ? srcH : srcA;
   }
   return slot; // partido no terminado, mantener código
 }
