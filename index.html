@@ -1419,12 +1419,12 @@ const RAW = [
   {d:'2026-06-30',s:'R32',h:'Costa de Marfil',   a:'Noruega',            hf:'🇨🇮',af:'🇳🇴',et:'1:00 PM', v:'AT&T, Arlington', score:{h:1,a:2}},
   {d:'2026-06-30',s:'R32',h:'Francia',           a:'Suecia',             hf:'🇫🇷',af:'🇸🇪',et:'5:00 PM', v:'MetLife, NJ', score:{h:3,a:0}},
   {d:'2026-06-30',s:'R32',h:'México',            a:'Ecuador',            hf:'🇲🇽',af:'🇪🇨',et:'9:00 PM', v:'Azteca, CDMX', score:{h:2,a:0}},
-  {d:'2026-07-01',s:'R32',h:'Inglaterra',        a:'Rep. Dem. Congo',    hf:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',af:'🇨🇩',et:'12:00 PM',v:'Mercedes-Benz, Atlanta'},
-  {d:'2026-07-01',s:'R32',h:'EUA',               a:'Bosnia-Herzegovina', hf:'🇺🇸',af:'🇧🇦',et:'4:00 PM', v:"Levi's, Santa Clara"},
-  {d:'2026-07-01',s:'R32',h:'Bélgica',           a:'Senegal',            hf:'🇧🇪',af:'🇸🇳',et:'8:00 PM', v:'Lumen Field, Seattle'},
-  {d:'2026-07-02',s:'R32',h:'Portugal',          a:'Croacia',            hf:'🇵🇹',af:'🇭🇷',et:'3:00 PM', v:'BMO Field, Toronto'},
-  {d:'2026-07-02',s:'R32',h:'España',            a:'Austria',            hf:'🇪🇸',af:'🇦🇹',et:'7:00 PM', v:'SoFi, Inglewood'},
-  {d:'2026-07-02',s:'R32',h:'Suiza',             a:'Argelia',            hf:'🇨🇭',af:'🇩🇿',et:'11:00 PM',v:'BC Place, Vancouver'},
+  {d:'2026-07-01',s:'R32',h:'Inglaterra',        a:'Rep. Dem. Congo',    hf:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',af:'🇨🇩',et:'12:00 PM',v:'Mercedes-Benz, Atlanta', score:{h:2,a:1}},
+  {d:'2026-07-01',s:'R32',h:'EUA',               a:'Bosnia-Herzegovina', hf:'🇺🇸',af:'🇧🇦',et:'4:00 PM', v:"Levi's, Santa Clara", score:{h:2,a:0}},
+  {d:'2026-07-01',s:'R32',h:'Bélgica',           a:'Senegal',            hf:'🇧🇪',af:'🇸🇳',et:'8:00 PM', v:'Lumen Field, Seattle', score:{h:3,a:2}},
+  {d:'2026-07-02',s:'R32',h:'Portugal',          a:'Croacia',            hf:'🇵🇹',af:'🇭🇷',et:'3:00 PM', v:'BMO Field, Toronto', score:{h:2,a:1}},
+  {d:'2026-07-02',s:'R32',h:'España',            a:'Austria',            hf:'🇪🇸',af:'🇦🇹',et:'7:00 PM', v:'SoFi, Inglewood', score:{h:3,a:0}},
+  {d:'2026-07-02',s:'R32',h:'Suiza',             a:'Argelia',            hf:'🇨🇭',af:'🇩🇿',et:'11:00 PM',v:'BC Place, Vancouver', score:{h:2,a:0}},
   {d:'2026-07-03',s:'R32',h:'Australia',         a:'Egipto',             hf:'🇦🇺',af:'🇪🇬',et:'2:00 PM', v:'AT&T, Arlington'},
   {d:'2026-07-03',s:'R32',h:'Argentina',         a:'Cabo Verde',         hf:'🇦🇷',af:'🇨🇻',et:'6:00 PM', v:'Hard Rock, Miami'},
   {d:'2026-07-03',s:'R32',h:'Colombia',          a:'Ghana',              hf:'🇨🇴',af:'🇬🇭',et:'9:30 PM', v:'Arrowhead, Kansas City'},
@@ -2597,6 +2597,10 @@ function resolveKOMatch(m) {
     homeScore = m.score.h; awayScore = m.score.a;
     winner = homeScore > m.score.a ? home : m.score.a > homeScore ? away : null;
   }
+  // Si quedó empatado (eliminatoria) y hay definición por penales, ese es el ganador
+  if (winner === null && homeScore !== null && homeScore === awayScore && m.pen && m.pen.w) {
+    winner = m.pen.w === m.h ? home : m.pen.w === m.a ? away : winner;
+  }
   return { home, away, homeScore, awayScore, winner };
 }
 
@@ -2643,6 +2647,10 @@ function renderBracket() {
     }
     if (hScore !== null) {
       winner = hScore > aScore ? rh.name : aScore > hScore ? ra.name : null;
+      // Si quedó empatado (eliminatoria) y hay definición por penales, ese es el ganador
+      if (winner === null && hScore === aScore && m.pen && m.pen.w) {
+        winner = m.pen.w === m.h ? rh.name : m.pen.w === m.a ? ra.name : null;
+      }
     }
     return { home: rh, away: ra, hScore, aScore, winner };
   }
