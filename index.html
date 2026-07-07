@@ -2250,9 +2250,10 @@ function normalizeTeamName(name) {
 function findMatch(homeName, awayName) {
   const h = normalizeTeamName(homeName);
   const a = normalizeTeamName(awayName);
-  // Búsqueda exacta después de normalizar
+  // Búsqueda exacta después de normalizar (comparando nombres YA resueltos,
+  // porque en R16+ el campo h/a puede ser un código interno tipo "W86")
   return MATCHES.find(mx =>
-    normalizeTeamName(mx.h) === h && normalizeTeamName(mx.a) === a
+    normalizeTeamName(resolveTeamName(mx.h)) === h && normalizeTeamName(resolveTeamName(mx.a)) === a
   );
 }
 
